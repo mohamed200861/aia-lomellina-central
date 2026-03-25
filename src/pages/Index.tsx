@@ -346,7 +346,7 @@ export default function Index() {
               <h3 className="font-heading font-bold text-lg mb-2">Instagram</h3>
               <p className="text-sm text-muted-foreground mb-4">Segui @aialomellina per foto e storie dal campo</p>
               <a href="https://www.instagram.com/aialomellina/" target="_blank" rel="noopener noreferrer">
-                <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-primary-foreground border-0 hover:opacity-90">
+                <Button className="bg-gradient-to-r from-[hsl(280,60%,50%)] to-[hsl(340,70%,55%)] text-primary-foreground border-0 hover:opacity-90">
                   Seguici su Instagram
                 </Button>
               </a>
