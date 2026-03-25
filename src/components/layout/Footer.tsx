@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Facebook, Instagram, Youtube, Send, MessageCircle } from "lucide-react";
-import aiaLogo from "@/assets/aia-logo.png";
+import aiaLogo from "@/assets/aia-logo.webp";
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">

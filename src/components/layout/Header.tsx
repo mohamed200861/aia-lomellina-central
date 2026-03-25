@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown, Facebook, Instagram, Youtube, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import aiaLogo from "@/assets/aia-logo.png";
+import aiaLogo from "@/assets/aia-logo.webp";
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
