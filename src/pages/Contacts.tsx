@@ -29,7 +29,7 @@ export default function Contacts() {
   const { data: settings } = useSiteSettings();
 
   async function onSubmit(data: FormData) {
-    const { error } = await supabase.from("contact_submissions").insert(data);
+    const { error } = await supabase.from("contact_submissions").insert([data]);
     if (error) { toast.error("Errore nell'invio. Riprova."); return; }
     toast.success("Messaggio inviato! Ti risponderemo il prima possibile.");
     form.reset();
