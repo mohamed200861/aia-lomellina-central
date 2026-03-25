@@ -42,14 +42,10 @@ export default function Header() {
   const location = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 glass shadow-sm">
+    <header className="sticky top-0 z-50 bg-primary shadow-lg">
       <div className="container mx-auto flex items-center justify-between h-16 md:h-20 px-4">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={aiaLogo} alt="AIA Lomellina" className="h-12 w-12 object-contain" />
-          <div className="hidden sm:block leading-tight">
-            <span className="font-heading font-bold text-primary text-sm">AIA Lomellina</span>
-            <span className="block text-[10px] text-muted-foreground">Sezione Arbitri</span>
-          </div>
+        <Link to="/" className="flex items-center gap-3 shrink-0">
+          <img src={aiaLogo} alt="AIA Lomellina" className="h-14 w-auto object-contain" />
         </Link>
 
         {/* Desktop Nav */}
@@ -62,7 +58,7 @@ export default function Header() {
                 onMouseEnter={() => setDropdownOpen(true)}
                 onMouseLeave={() => setDropdownOpen(false)}
               >
-                <button className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-primary transition-colors rounded-md">
+                <button className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-primary-foreground/80 hover:text-secondary transition-colors rounded-md">
                   {item.label}
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -72,7 +68,7 @@ export default function Header() {
                       <Link
                         key={child.path}
                         to={child.path}
-                        className="block px-4 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+                        className="block px-4 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors"
                       >
                         {child.label}
                       </Link>
@@ -86,8 +82,8 @@ export default function Header() {
                 to={item.path!}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   location.pathname === item.path
-                    ? "text-primary bg-accent"
-                    : "text-foreground/80 hover:text-primary"
+                    ? "text-secondary"
+                    : "text-primary-foreground/80 hover:text-secondary"
                 }`}
               >
                 {item.label}
@@ -104,7 +100,7 @@ export default function Header() {
                 href={s.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                className="p-1.5 text-primary-foreground/60 hover:text-secondary transition-colors"
                 aria-label={s.label}
               >
                 {typeof s.icon === "function" && s.icon.toString().includes("svg") ? (
@@ -116,12 +112,12 @@ export default function Header() {
             ))}
           </div>
           <Link to="/diventa-arbitro">
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold">
               Iscriviti al Corso
             </Button>
           </Link>
           <Link to="/area-associati">
-            <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-accent">
+            <Button size="sm" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
               Area Associati
             </Button>
           </Link>
@@ -129,7 +125,7 @@ export default function Header() {
 
         {/* Mobile toggle */}
         <button
-          className="lg:hidden p-2 text-foreground"
+          className="lg:hidden p-2 text-primary-foreground"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Menu"
         >
@@ -139,14 +135,14 @@ export default function Header() {
 
       {/* Mobile Nav */}
       {mobileOpen && (
-        <div className="lg:hidden bg-card border-t shadow-lg">
+        <div className="lg:hidden bg-primary border-t border-primary-foreground/10">
           <nav className="container mx-auto px-4 py-4 space-y-1">
             {navItems.map((item) =>
               item.children ? (
                 <div key={item.label}>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md"
+                    className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-primary-foreground rounded-md"
                   >
                     {item.label}
                     <ChevronDown className={`h-4 w-4 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
@@ -158,7 +154,7 @@ export default function Header() {
                           key={child.path}
                           to={child.path}
                           onClick={() => setMobileOpen(false)}
-                          className="block px-3 py-2 text-sm rounded-md hover:bg-accent"
+                          className="block px-3 py-2 text-sm text-primary-foreground/80 rounded-md hover:bg-primary-foreground/10"
                         >
                           {child.label}
                         </Link>
@@ -171,7 +167,7 @@ export default function Header() {
                   key={item.path}
                   to={item.path!}
                   onClick={() => setMobileOpen(false)}
-                  className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                  className="block px-3 py-2 text-sm font-medium text-primary-foreground rounded-md hover:bg-primary-foreground/10"
                 >
                   {item.label}
                 </Link>
@@ -179,15 +175,15 @@ export default function Header() {
             )}
             <div className="flex gap-2 pt-3">
               <Link to="/diventa-arbitro" className="flex-1" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full bg-primary text-primary-foreground" size="sm">Iscriviti al Corso</Button>
+                <Button className="w-full bg-secondary text-secondary-foreground font-bold" size="sm">Iscriviti al Corso</Button>
               </Link>
               <Link to="/area-associati" className="flex-1" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full" variant="outline" size="sm">Area Associati</Button>
+                <Button className="w-full border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" variant="outline" size="sm">Area Associati</Button>
               </Link>
             </div>
             <div className="flex justify-center gap-3 pt-3">
               {socials.map((s) => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="p-2 text-muted-foreground hover:text-primary">
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="p-2 text-primary-foreground/60 hover:text-secondary">
                   {typeof s.icon === "function" && s.icon.toString().includes("svg") ? <s.icon /> : <s.icon className="h-5 w-5" />}
                 </a>
               ))}
