@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard, Newspaper, Calendar, Image, Users, Settings,
   FileText, MessageSquare, ClipboardList, DollarSign, BookOpen,
-  Shield, Menu, X, LogOut, ChevronDown, Home
+  Shield, Menu, X, LogOut, Home, UserCheck, BookMarked, Heart,
+  Dumbbell, FolderOpen, Bell, Archive
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import aiaLogo from "@/assets/aia-logo.webp";
@@ -14,7 +15,9 @@ const navItems = [
   { path: "/admin/news", label: "News", icon: Newspaper },
   { path: "/admin/events", label: "Eventi", icon: Calendar },
   { path: "/admin/media", label: "Media", icon: Image },
-  { path: "/admin/staff", label: "Staff", icon: Users },
+  { path: "/admin/press-review", label: "Rassegna Stampa", icon: BookMarked },
+  { path: "/admin/staff", label: "Staff / Organigramma", icon: Users },
+  { path: "/admin/referees", label: "Organico Arbitri", icon: UserCheck },
   { path: "/admin/registrations", label: "Iscrizioni Corso", icon: BookOpen },
   { path: "/admin/submissions", label: "Messaggi", icon: MessageSquare },
   { path: "/admin/rto", label: "RTO", icon: ClipboardList },
@@ -24,10 +27,17 @@ const navItems = [
   { path: "/admin/settings", label: "Impostazioni", icon: Settings },
 ];
 
+const ROLE_DISPLAY: Record<string, string> = {
+  super_admin: "Il Grande P",
+  admin: "Admin",
+  editor: "Editor",
+  member: "Membro",
+};
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { signOut, user, roles } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -35,9 +45,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     navigate("/");
   };
 
+  const displayRole = roles.length > 0 ? ROLE_DISPLAY[roles[0]] || roles[0] : "";
+
   return (
     <div className="min-h-screen bg-muted flex">
-      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary text-primary-foreground transform transition-transform duration-200 lg:translate-x-0 lg:static ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex items-center gap-3 p-4 border-b border-primary-foreground/20">
           <img src={aiaLogo} alt="AIA" className="h-10 w-10 object-contain" />
@@ -72,19 +83,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-background border-b px-4 py-3 flex items-center gap-4 sticky top-0 z-30">
           <button className="lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex-1" />
-          <span className="text-sm text-muted-foreground">{user?.email}</span>
+          <div className="text-right">
+            <span className="text-sm text-muted-foreground block">{user?.email}</span>
+            {displayRole && <span className="text-xs font-bold text-primary">{displayRole}</span>}
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           {children}

@@ -17,7 +17,7 @@ const navItems = [
     label: "La Sezione",
     children: [
       { label: "Organigramma", path: "/organigramma" },
-      { label: "Elenco Arbitri", path: "/elenco-arbitri" },
+      { label: "Organico", path: "/elenco-arbitri" },
     ],
   },
   { label: "Diventa Arbitro", path: "/diventa-arbitro" },
@@ -25,6 +25,7 @@ const navItems = [
   { label: "News", path: "/news" },
   { label: "Eventi", path: "/eventi" },
   { label: "Media", path: "/media" },
+  { label: "Rassegna Stampa", path: "/rassegna-stampa" },
   { label: "Contatti", path: "/contatti" },
 ];
 
@@ -117,7 +118,7 @@ export default function Header() {
             </Button>
           </Link>
           <Link to="/area-associati">
-            <Button size="sm" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button size="sm" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold">
               Area Associati
             </Button>
           </Link>
