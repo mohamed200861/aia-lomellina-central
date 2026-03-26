@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default function MembersReimbursements() {
   const { data: rules } = useQuery({
@@ -13,38 +12,55 @@ export default function MembersReimbursements() {
     },
   });
 
-  const categories = [...new Set(rules?.map((r) => r.category) || [])];
+  // Pivot: group by distance_bracket, columns = roles
+  const roles = ["A.E. SGS", "A.E. LND", "A.A.", "O.A.", "TUTOR"];
+  const brackets = [...new Set(rules?.map((r) => r.distance_bracket) || [])];
+  // Maintain sort order
+  const sortedBrackets = brackets.sort((a, b) => {
+    const aMin = parseInt(a.split("-")[0]) || 0;
+    const bMin = parseInt(b.split("-")[0]) || 0;
+    return aMin - bMin;
+  });
+
+  const getAmount = (bracket: string, role: string) => {
+    const rule = rules?.find((r) => r.distance_bracket === bracket && r.role === role);
+    return rule ? `${rule.amount} €` : "–";
+  };
 
   return (
     <Layout>
       <section className="bg-primary text-primary-foreground section-padding">
         <div className="container mx-auto text-center">
           <h1 className="text-3xl font-heading font-extrabold">Rimborsi Spese</h1>
-          <p className="text-primary-foreground/80 mt-2">Tabelle rimborsi per categoria e distanza</p>
+          <p className="text-primary-foreground/80 mt-2">Tabella rimborsi per percorrenza andata/ritorno, ruolo e categoria</p>
         </div>
       </section>
       <section className="section-padding bg-background">
-        <div className="container mx-auto max-w-4xl">
-          {categories.length === 0 && <p className="text-center text-muted-foreground">Tabelle rimborsi non ancora configurate.</p>}
-          {categories.map((cat) => (
-            <div key={cat} className="mb-8">
-              <h2 className="font-heading font-bold text-xl mb-4">{cat}</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border rounded-lg overflow-hidden">
-                  <thead><tr className="bg-primary text-primary-foreground"><th className="p-3 text-left">Ruolo</th><th className="p-3 text-left">Distanza A/R</th><th className="p-3 text-right">Importo</th></tr></thead>
-                  <tbody>
-                    {rules?.filter((r) => r.category === cat).map((r, i) => (
-                      <tr key={r.id} className={i % 2 === 0 ? "bg-background" : "bg-muted"}>
-                        <td className="p-3">{r.role}</td>
-                        <td className="p-3">{r.distance_bracket}</td>
-                        <td className="p-3 text-right font-bold">€{r.amount.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+        <div className="container mx-auto max-w-5xl">
+          {sortedBrackets.length === 0 ? (
+            <p className="text-center text-muted-foreground">Tabelle rimborsi non ancora configurate.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border shadow-sm">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-primary text-primary-foreground">
+                    <th className="p-3 text-left font-bold">PERCORRENZA a/r</th>
+                    {roles.map((r) => <th key={r} className="p-3 text-center font-bold whitespace-nowrap">{r}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedBrackets.map((bracket, i) => (
+                    <tr key={bracket} className={i % 2 === 0 ? "bg-background" : "bg-muted/50"}>
+                      <td className="p-3 font-medium whitespace-nowrap">{bracket}</td>
+                      {roles.map((role) => (
+                        <td key={role} className="p-3 text-center font-bold">{getAmount(bracket, role)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
+          )}
         </div>
       </section>
     </Layout>
