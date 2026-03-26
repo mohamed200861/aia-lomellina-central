@@ -15,6 +15,7 @@ import BecomeReferee from "./pages/BecomeReferee";
 import News from "./pages/News";
 import Events from "./pages/Events";
 import MediaPage from "./pages/MediaPage";
+import PressReview from "./pages/PressReview";
 import Contacts from "./pages/Contacts";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -43,6 +44,8 @@ import AdminReimbursements from "./pages/admin/AdminReimbursements";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminPressReview from "./pages/admin/AdminPressReview";
+import AdminReferees from "./pages/admin/AdminReferees";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +66,7 @@ const App = () => (
             <Route path="/news" element={<News />} />
             <Route path="/eventi" element={<Events />} />
             <Route path="/media" element={<MediaPage />} />
+            <Route path="/rassegna-stampa" element={<PressReview />} />
             <Route path="/contatti" element={<Contacts />} />
             <Route path="/login" element={<Auth />} />
 
@@ -83,11 +87,13 @@ const App = () => (
             <Route path="/admin/events" element={<ProtectedRoute requireAdmin><AdminEvents /></ProtectedRoute>} />
             <Route path="/admin/media" element={<ProtectedRoute requireAdmin><AdminMedia /></ProtectedRoute>} />
             <Route path="/admin/staff" element={<ProtectedRoute requireAdmin><AdminStaff /></ProtectedRoute>} />
+            <Route path="/admin/referees" element={<ProtectedRoute requireAdmin><AdminReferees /></ProtectedRoute>} />
             <Route path="/admin/registrations" element={<ProtectedRoute requireAdmin><AdminRegistrations /></ProtectedRoute>} />
             <Route path="/admin/submissions" element={<ProtectedRoute requireAdmin><AdminSubmissions /></ProtectedRoute>} />
             <Route path="/admin/rto" element={<ProtectedRoute requireAdmin><AdminRTO /></ProtectedRoute>} />
             <Route path="/admin/reimbursements" element={<ProtectedRoute requireAdmin><AdminReimbursements /></ProtectedRoute>} />
             <Route path="/admin/reports" element={<ProtectedRoute requireAdmin><AdminReports /></ProtectedRoute>} />
+            <Route path="/admin/press-review" element={<ProtectedRoute requireAdmin><AdminPressReview /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute requireSuperAdmin><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
 
