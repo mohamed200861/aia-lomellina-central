@@ -403,6 +403,42 @@ export type Database = {
         }
         Relationships: []
       }
+      press_review: {
+        Row: {
+          article_date: string
+          created_at: string
+          external_url: string | null
+          file_url: string | null
+          id: string
+          newspaper: string
+          page: string | null
+          sort_order: number | null
+          year: number
+        }
+        Insert: {
+          article_date: string
+          created_at?: string
+          external_url?: string | null
+          file_url?: string | null
+          id?: string
+          newspaper: string
+          page?: string | null
+          sort_order?: number | null
+          year: number
+        }
+        Update: {
+          article_date?: string
+          created_at?: string
+          external_url?: string | null
+          file_url?: string | null
+          id?: string
+          newspaper?: string
+          page?: string | null
+          sort_order?: number | null
+          year?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -430,6 +466,42 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referees: {
+        Row: {
+          created_at: string
+          first_name: string
+          id: string
+          is_active: boolean | null
+          last_name: string
+          qualification: string
+          sort_order: number | null
+          technical_body: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          id?: string
+          is_active?: boolean | null
+          last_name: string
+          qualification?: string
+          sort_order?: number | null
+          technical_body?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_name?: string
+          qualification?: string
+          sort_order?: number | null
+          technical_body?: string
+          updated_at?: string
         }
         Relationships: []
       }
