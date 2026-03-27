@@ -5,26 +5,68 @@ import {
   LayoutDashboard, Newspaper, Calendar, Image, Users, Settings,
   FileText, MessageSquare, ClipboardList, DollarSign, BookOpen,
   Shield, Menu, X, LogOut, Home, UserCheck, BookMarked, Heart,
-  Dumbbell, FolderOpen, Bell, Archive
+  Dumbbell, FolderOpen, Bell, Archive, Activity, Stethoscope,
+  ChevronDown, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import aiaLogo from "@/assets/aia-logo.webp";
 
-const navItems = [
-  { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/admin/news", label: "News", icon: Newspaper },
-  { path: "/admin/events", label: "Eventi", icon: Calendar },
-  { path: "/admin/media", label: "Media", icon: Image },
-  { path: "/admin/press-review", label: "Rassegna Stampa", icon: BookMarked },
-  { path: "/admin/staff", label: "Staff / Organigramma", icon: Users },
-  { path: "/admin/referees", label: "Organico Arbitri", icon: UserCheck },
-  { path: "/admin/registrations", label: "Iscrizioni Corso", icon: BookOpen },
-  { path: "/admin/submissions", label: "Messaggi", icon: MessageSquare },
-  { path: "/admin/rto", label: "RTO", icon: ClipboardList },
-  { path: "/admin/reimbursements", label: "Rimborsi", icon: DollarSign },
-  { path: "/admin/reports", label: "Referti", icon: FileText },
-  { path: "/admin/users", label: "Utenti & Ruoli", icon: Shield },
-  { path: "/admin/settings", label: "Impostazioni", icon: Settings },
+interface NavGroup {
+  label: string;
+  items: { path: string; label: string; icon: any }[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Generale",
+    items: [
+      { path: "/admin", label: "Dashboard", icon: LayoutDashboard },
+      { path: "/admin/settings", label: "Impostazioni", icon: Settings },
+      { path: "/admin/activity-log", label: "Log Attività", icon: Activity },
+    ],
+  },
+  {
+    label: "Contenuti",
+    items: [
+      { path: "/admin/news", label: "News", icon: Newspaper },
+      { path: "/admin/events", label: "Eventi", icon: Calendar },
+      { path: "/admin/media", label: "Media", icon: Image },
+      { path: "/admin/press-review", label: "Rassegna Stampa", icon: BookMarked },
+    ],
+  },
+  {
+    label: "Organizzazione",
+    items: [
+      { path: "/admin/staff", label: "Staff", icon: Users },
+      { path: "/admin/referees", label: "Organico Arbitri", icon: UserCheck },
+    ],
+  },
+  {
+    label: "Inbox & Iscrizioni",
+    items: [
+      { path: "/admin/registrations", label: "Iscrizioni Corso", icon: BookOpen },
+      { path: "/admin/submissions", label: "Messaggi", icon: MessageSquare },
+      { path: "/admin/justifications", label: "Giustificazioni", icon: Archive },
+    ],
+  },
+  {
+    label: "Area Associati",
+    items: [
+      { path: "/admin/rto", label: "RTO", icon: ClipboardList },
+      { path: "/admin/reimbursements", label: "Rimborsi", icon: DollarSign },
+      { path: "/admin/reports", label: "Referti", icon: FileText },
+      { path: "/admin/medical", label: "Centri Medici", icon: Stethoscope },
+      { path: "/admin/athletic", label: "Area Atletica", icon: Dumbbell },
+      { path: "/admin/documents", label: "Documenti", icon: FolderOpen },
+      { path: "/admin/communications", label: "Comunicazioni", icon: Bell },
+    ],
+  },
+  {
+    label: "Sistema",
+    items: [
+      { path: "/admin/users", label: "Utenti & Ruoli", icon: Shield },
+    ],
+  },
 ];
 
 const ROLE_DISPLAY: Record<string, string> = {
@@ -36,6 +78,7 @@ const ROLE_DISPLAY: Record<string, string> = {
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const { signOut, user, roles } = useAuth();
   const navigate = useNavigate();
@@ -45,57 +88,96 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     navigate("/");
   };
 
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
+
   const displayRole = roles.length > 0 ? ROLE_DISPLAY[roles[0]] || roles[0] : "";
 
   return (
     <div className="min-h-screen bg-muted flex">
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary text-primary-foreground transform transition-transform duration-200 lg:translate-x-0 lg:static ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex items-center gap-3 p-4 border-b border-primary-foreground/20">
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary text-primary-foreground transform transition-transform duration-200 lg:translate-x-0 lg:static flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        {/* Header */}
+        <div className="flex items-center gap-3 p-4 border-b border-primary-foreground/20 shrink-0">
           <img src={aiaLogo} alt="AIA" className="h-10 w-10 object-contain" />
           <div>
             <h2 className="font-heading font-bold text-sm">AIA Lomellina</h2>
             <p className="text-xs text-primary-foreground/60">Pannello Admin</p>
           </div>
         </div>
-        <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
-          {navItems.map((item) => {
-            const active = location.pathname === item.path;
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+          {navGroups.map((group) => {
+            const isCollapsed = collapsedGroups[group.label];
+            const hasActive = group.items.some((i) => location.pathname === i.path);
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? "bg-secondary text-secondary-foreground font-semibold" : "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"}`}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </Link>
+              <div key={group.label}>
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className="flex items-center justify-between w-full px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground/50 hover:text-primary-foreground/70 transition-colors"
+                >
+                  {group.label}
+                  {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                </button>
+                {!isCollapsed && (
+                  <div className="mt-1 space-y-0.5">
+                    {group.items.map((item) => {
+                      const active = location.pathname === item.path;
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
+                            active
+                              ? "bg-secondary text-secondary-foreground font-semibold shadow-sm"
+                              : "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-primary-foreground/20">
-          <Link to="/" className="flex items-center gap-2 px-3 py-2 text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors">
+
+        {/* Footer */}
+        <div className="p-3 border-t border-primary-foreground/20 shrink-0 space-y-1">
+          <Link to="/" className="flex items-center gap-2 px-3 py-2 text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors rounded-lg hover:bg-primary-foreground/5">
             <Home className="h-4 w-4" /> Torna al Sito
           </Link>
-          <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2 text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors w-full">
+          <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2 text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors w-full rounded-lg hover:bg-primary-foreground/5">
             <LogOut className="h-4 w-4" /> Esci
           </button>
         </div>
       </aside>
 
+      {/* Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
+      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-background border-b px-4 py-3 flex items-center gap-4 sticky top-0 z-30">
-          <button className="lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            <Menu className="h-6 w-6" />
+        <header className="bg-background border-b px-4 py-3 flex items-center gap-4 sticky top-0 z-30 shadow-sm">
+          <button className="lg:hidden p-1.5 rounded-lg hover:bg-muted transition-colors" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Menu className="h-5 w-5" />
           </button>
           <div className="flex-1" />
           <div className="text-right">
             <span className="text-sm text-muted-foreground block">{user?.email}</span>
-            {displayRole && <span className="text-xs font-bold text-primary">{displayRole}</span>}
+            {displayRole && (
+              <span className={`text-xs font-bold ${roles[0] === "super_admin" ? "text-secondary" : "text-primary"}`}>
+                {displayRole}
+              </span>
+            )}
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 overflow-auto">

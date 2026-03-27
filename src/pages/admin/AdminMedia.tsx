@@ -5,13 +5,19 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import FileUpload from "@/components/admin/FileUpload";
 import { toast } from "sonner";
-import { Plus, Trash2, Image as ImageIcon, Film } from "lucide-react";
+import { Plus, Trash2, Pencil, Film, Image as ImageIcon, Music, ExternalLink } from "lucide-react";
 
 export default function AdminMedia() {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [fileUrl, setFileUrl] = useState("");
+  const [mediaType, setMediaType] = useState("image");
+  const [filter, setFilter] = useState("all");
   const qc = useQueryClient();
 
   const { data: media } = useQuery({
@@ -25,10 +31,15 @@ export default function AdminMedia() {
 
   const saveMutation = useMutation({
     mutationFn: async (values: any) => {
-      const { error } = await supabase.from("media").insert(values);
-      if (error) throw error;
+      if (values.id) {
+        const { error } = await supabase.from("media").update(values).eq("id", values.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("media").insert(values);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-media"] }); setOpen(false); toast.success("Media aggiunto!"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-media"] }); setOpen(false); setEditing(null); setFileUrl(""); toast.success("Media salvato!"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -40,61 +51,117 @@ export default function AdminMedia() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    saveMutation.mutate({
+    const type = fd.get("media_type") as string;
+    const url = type === "youtube" ? (fd.get("youtube_url") as string) : fileUrl;
+    if (!url) { toast.error("URL o file richiesto"); return; }
+    const values: any = {
       title: fd.get("title") as string,
-      file_url: fd.get("file_url") as string,
-      media_type: fd.get("media_type") as string,
-      gallery: fd.get("gallery") as string,
       description: fd.get("description") as string,
-    });
+      file_url: url,
+      media_type: type,
+      gallery: fd.get("gallery") as string || null,
+    };
+    if (editing) values.id = editing.id;
+    saveMutation.mutate(values);
+  };
+
+  const openEdit = (m: any) => { setEditing(m); setMediaType(m.media_type || "image"); setFileUrl(m.file_url); setOpen(true); };
+
+  const filtered = media?.filter((m) => filter === "all" || m.media_type === filter);
+  const galleries = [...new Set(media?.map((m) => m.gallery).filter(Boolean) || [])];
+
+  const typeIcon = (type: string | null) => {
+    if (type === "video") return <Film className="h-5 w-5" />;
+    if (type === "youtube") return <ExternalLink className="h-5 w-5" />;
+    if (type === "audio") return <Music className="h-5 w-5" />;
+    return <ImageIcon className="h-5 w-5" />;
   };
 
   return (
     <AdminLayout>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-heading font-bold">Gestione Media</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Aggiungi</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Aggiungi Media</DialogTitle></DialogHeader>
+        <div>
+          <h1 className="text-2xl font-heading font-bold">Libreria Media</h1>
+          <p className="text-muted-foreground">{media?.length || 0} elementi</p>
+        </div>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditing(null); setFileUrl(""); setMediaType("image"); } }}>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Aggiungi Media</Button></DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>{editing ? "Modifica Media" : "Aggiungi Media"}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div><Label>Titolo</Label><Input name="title" /></div>
-              <div><Label>URL File / YouTube</Label><Input name="file_url" required placeholder="https://..." /></div>
+              <div><Label>Titolo</Label><Input name="title" defaultValue={editing?.title} /></div>
               <div><Label>Tipo</Label>
-                <select name="media_type" className="w-full border rounded-md px-3 py-2 text-sm">
+                <select name="media_type" value={mediaType} onChange={(e) => setMediaType(e.target.value)} className="w-full border rounded-md px-3 py-2 text-sm bg-background">
                   <option value="image">Immagine</option>
                   <option value="video">Video</option>
                   <option value="youtube">YouTube</option>
+                  <option value="audio">Audio</option>
                 </select>
               </div>
-              <div><Label>Galleria</Label><Input name="gallery" placeholder="Nome galleria (opzionale)" /></div>
-              <div><Label>Descrizione</Label><Input name="description" /></div>
-              <Button type="submit">Salva</Button>
+              {mediaType === "youtube" ? (
+                <div><Label>URL YouTube</Label><Input name="youtube_url" defaultValue={editing?.file_url} placeholder="https://youtube.com/watch?v=..." required /></div>
+              ) : (
+                <div>
+                  <Label>File</Label>
+                  <FileUpload
+                    bucket="media"
+                    folder={mediaType === "audio" ? "audio" : mediaType === "video" ? "video" : "images"}
+                    accept={mediaType === "image" ? "image/*" : mediaType === "video" ? "video/*" : "audio/*"}
+                    onUpload={setFileUrl}
+                    currentUrl={editing?.file_url}
+                    label={`Carica ${mediaType === "image" ? "immagine" : mediaType === "video" ? "video" : "audio"}`}
+                  />
+                </div>
+              )}
+              <div><Label>Galleria (opzionale)</Label><Input name="gallery" defaultValue={editing?.gallery} placeholder="Nome galleria" /></div>
+              <div><Label>Descrizione</Label><Textarea name="description" defaultValue={editing?.description} rows={3} /></div>
+              <Button type="submit" disabled={saveMutation.isPending}>Salva</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {media?.map((m) => (
-          <Card key={m.id}>
-            <CardContent className="p-3">
+
+      {/* Filters */}
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {[{ v: "all", l: "Tutti" }, { v: "image", l: "Immagini" }, { v: "video", l: "Video" }, { v: "youtube", l: "YouTube" }, { v: "audio", l: "Audio" }].map((f) => (
+          <button
+            key={f.v}
+            onClick={() => setFilter(f.v)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filter === f.v ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}
+          >
+            {f.l}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filtered?.map((m) => (
+          <Card key={m.id} className="overflow-hidden group">
+            <div className="relative">
               {m.media_type === "image" ? (
-                <img src={m.file_url} alt={m.title || ""} className="w-full h-40 object-cover rounded mb-2" />
+                <img src={m.file_url} alt={m.title || ""} className="w-full h-44 object-cover" />
               ) : (
-                <div className="w-full h-40 bg-muted rounded mb-2 flex items-center justify-center">
-                  <Film className="h-8 w-8 text-muted-foreground" />
+                <div className="w-full h-44 bg-muted flex flex-col items-center justify-center gap-2">
+                  {typeIcon(m.media_type)}
+                  <span className="text-xs text-muted-foreground capitalize">{m.media_type}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium truncate">{m.title || "Senza titolo"}</span>
-                <Button size="sm" variant="destructive" onClick={() => { if (confirm("Eliminare?")) deleteMutation.mutate(m.id); }}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                <Button size="sm" variant="secondary" onClick={() => openEdit(m)}><Pencil className="h-3 w-3" /></Button>
+                <Button size="sm" variant="destructive" onClick={() => { if (confirm("Eliminare?")) deleteMutation.mutate(m.id); }}><Trash2 className="h-3 w-3" /></Button>
+              </div>
+            </div>
+            <CardContent className="p-3">
+              <p className="font-medium text-sm truncate">{m.title || "Senza titolo"}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-muted-foreground capitalize">{m.media_type}</span>
+                {m.gallery && <span className="text-xs bg-accent px-1.5 py-0.5 rounded">{m.gallery}</span>}
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+      {filtered?.length === 0 && <p className="text-center text-muted-foreground py-12">Nessun media. Aggiungi il primo!</p>}
     </AdminLayout>
   );
 }
