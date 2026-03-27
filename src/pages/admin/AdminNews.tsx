@@ -6,16 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import FileUpload from "@/components/admin/FileUpload";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
 export default function AdminNews() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const qc = useQueryClient();
 
   const { data: news, isLoading } = useQuery({
@@ -39,22 +39,15 @@ export default function AdminNews() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-news"] });
-      setOpen(false);
-      setEditing(null);
+      setOpen(false); setEditing(null); setImageUrl("");
       toast.success("News salvata!");
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("news").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-news"] });
-      toast.success("News eliminata!");
-    },
+    mutationFn: async (id: string) => { const { error } = await supabase.from("news").delete().eq("id", id); if (error) throw error; },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-news"] }); toast.success("News eliminata!"); },
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,6 +58,7 @@ export default function AdminNews() {
       content: fd.get("content") as string,
       excerpt: fd.get("excerpt") as string,
       category: fd.get("category") as string,
+      featured_image: imageUrl || null,
       is_published: fd.get("is_published") === "on",
       is_featured: fd.get("is_featured") === "on",
     };
@@ -78,68 +72,67 @@ export default function AdminNews() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-heading font-bold">Gestione News</h1>
-          <p className="text-muted-foreground">Crea, modifica e pubblica news</p>
+          <p className="text-muted-foreground">{news?.length || 0} articoli</p>
         </div>
-        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditing(null); setImageUrl(""); } }}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Nuova News</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editing ? "Modifica News" : "Nuova News"}</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? "Modifica News" : "Nuova News"}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div><Label>Titolo</Label><Input name="title" defaultValue={editing?.title} required /></div>
+              <div><Label>Anteprima</Label><Input name="excerpt" defaultValue={editing?.excerpt} /></div>
+              <div><Label>Contenuto</Label><Textarea name="content" rows={8} defaultValue={editing?.content} /></div>
+              <div><Label>Categoria</Label><Input name="category" defaultValue={editing?.category || "Generale"} /></div>
               <div>
-                <Label htmlFor="title">Titolo</Label>
-                <Input id="title" name="title" defaultValue={editing?.title} required />
-              </div>
-              <div>
-                <Label htmlFor="excerpt">Anteprima</Label>
-                <Input id="excerpt" name="excerpt" defaultValue={editing?.excerpt} />
-              </div>
-              <div>
-                <Label htmlFor="content">Contenuto</Label>
-                <Textarea id="content" name="content" rows={8} defaultValue={editing?.content} />
-              </div>
-              <div>
-                <Label htmlFor="category">Categoria</Label>
-                <Input id="category" name="category" defaultValue={editing?.category || "Generale"} />
+                <Label>Immagine di copertina</Label>
+                <FileUpload
+                  bucket="media"
+                  folder="news"
+                  accept="image/*"
+                  onUpload={setImageUrl}
+                  currentUrl={editing?.featured_image}
+                  label="Carica immagine"
+                />
               </div>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="is_published" defaultChecked={editing?.is_published ?? true} />
-                  Pubblicata
+                  <input type="checkbox" name="is_published" defaultChecked={editing?.is_published ?? true} /> Pubblicata
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="is_featured" defaultChecked={editing?.is_featured} />
-                  In evidenza
+                  <input type="checkbox" name="is_featured" defaultChecked={editing?.is_featured} /> In evidenza
                 </label>
               </div>
-              <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? "Salvataggio..." : "Salva"}
-              </Button>
+              <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? "Salvataggio..." : "Salva"}</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
       <div className="space-y-3">
-        {isLoading && <p>Caricamento...</p>}
+        {isLoading && <p className="text-muted-foreground">Caricamento...</p>}
         {news?.map((n) => (
-          <Card key={n.id}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold">{n.title}</h3>
-                <div className="flex gap-2 mt-1 text-xs">
-                  <span className={`px-2 py-0.5 rounded-full ${n.is_published ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                    {n.is_published ? "Pubblicata" : "Bozza"}
-                  </span>
-                  <span className="text-muted-foreground">{n.category}</span>
-                  <span className="text-muted-foreground">{new Date(n.created_at).toLocaleDateString("it-IT")}</span>
+          <Card key={n.id} className="hover:shadow-sm transition-shadow">
+            <CardContent className="p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                {n.featured_image && (
+                  <img src={n.featured_image} alt="" className="h-16 w-24 object-cover rounded-lg shrink-0" />
+                )}
+                <div>
+                  <h3 className="font-bold">{n.title}</h3>
+                  <div className="flex gap-2 mt-1 text-xs flex-wrap">
+                    <span className={`px-2 py-0.5 rounded-full ${n.is_published ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      {n.is_published ? "Pubblicata" : "Bozza"}
+                    </span>
+                    {n.is_featured && <span className="px-2 py-0.5 rounded-full bg-secondary/20 text-secondary-foreground">In evidenza</span>}
+                    <span className="text-muted-foreground">{n.category}</span>
+                    <span className="text-muted-foreground">{new Date(n.created_at).toLocaleDateString("it-IT")}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => { setEditing(n); setOpen(true); }}>
+              <div className="flex gap-2 shrink-0">
+                <Button size="sm" variant="outline" onClick={() => { setEditing(n); setImageUrl(n.featured_image || ""); setOpen(true); }}>
                   <Pencil className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="destructive" onClick={() => { if (confirm("Eliminare questa news?")) deleteMutation.mutate(n.id); }}>
