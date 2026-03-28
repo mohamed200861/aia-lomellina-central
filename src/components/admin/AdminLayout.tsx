@@ -6,7 +6,7 @@ import {
   FileText, MessageSquare, ClipboardList, DollarSign, BookOpen,
   Shield, Menu, X, LogOut, Home, UserCheck, BookMarked, Heart,
   Dumbbell, FolderOpen, Bell, Archive, Activity, Stethoscope,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import aiaLogo from "@/assets/aia-logo.webp";
@@ -65,6 +65,7 @@ const navGroups: NavGroup[] = [
     label: "Sistema",
     items: [
       { path: "/admin/users", label: "Utenti & Ruoli", icon: Shield },
+      { path: "/admin/email-settings", label: "Email Settings", icon: Mail },
     ],
   },
 ];

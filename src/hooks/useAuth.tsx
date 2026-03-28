@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,7 +12,7 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any; user: User | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -24,37 +24,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRoles = async (userId: string) => {
+  const fetchRoles = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
-    if (data) setRoles(data.map((r) => r.role as AppRole));
-  };
+    const nextRoles = data?.map((r) => r.role as AppRole) ?? [];
+    setRoles(nextRoles);
+    return nextRoles;
+  }, []);
+
+  const syncSessionState = useCallback(async (nextSession: Session | null) => {
+    setSession(nextSession);
+    setUser(nextSession?.user ?? null);
+
+    if (nextSession?.user) {
+      await fetchRoles(nextSession.user.id);
+    } else {
+      setRoles([]);
+    }
+
+    setLoading(false);
+  }, [fetchRoles]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => fetchRoles(session.user.id), 0);
-        } else {
-          setRoles([]);
-        }
-        setLoading(false);
+      async (_event, nextSession) => {
+        if (!isMounted) return;
+        await syncSessionState(nextSession);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchRoles(session.user.id);
-      setLoading(false);
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      if (!isMounted) return;
+      await syncSessionState(currentSession);
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [syncSessionState]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -62,12 +74,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`,
+        data: { full_name: fullName },
+      },
     });
-    return { error };
+    return { error, user: data.user };
   };
 
   const signOut = async () => {

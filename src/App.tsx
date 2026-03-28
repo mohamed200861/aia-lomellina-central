@@ -53,6 +53,7 @@ import AdminAthletic from "./pages/admin/AdminAthletic";
 import AdminDocuments from "./pages/admin/AdminDocuments";
 import AdminCommunications from "./pages/admin/AdminCommunications";
 import AdminActivityLog from "./pages/admin/AdminActivityLog";
+import AdminEmailSettings from "./pages/admin/AdminEmailSettings";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="/admin/press-review" element={<ProtectedRoute requireAdmin><AdminPressReview /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute requireSuperAdmin><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
+            <Route path="/admin/email-settings" element={<ProtectedRoute requireSuperAdmin><AdminEmailSettings /></ProtectedRoute>} />
             <Route path="/admin/activity-log" element={<ProtectedRoute requireAdmin><AdminActivityLog /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Lock, Mail, User, ArrowLeft } from "lucide-react";
+import { sendAppEmail } from "@/lib/appEmail";
 
 type Mode = "login" | "register" | "forgot";
 
@@ -18,8 +19,37 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [awaitingRedirect, setAwaitingRedirect] = useState(false);
+  const { signIn, signUp, user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectPath = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const requested = params.get("redirect");
+    return requested?.startsWith("/") ? requested : null;
+  }, [location.search]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const denied = params.get("denied");
+    if (denied === "admin") toast.error("Non hai i permessi per accedere all'area admin.");
+    if (denied === "super-admin") toast.error("Solo Il Grande P può accedere a questa sezione.");
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!awaitingRedirect || authLoading || !user) return;
+
+    if (redirectPath?.startsWith("/admin") && !isAdmin) {
+      toast.error("Il tuo account non ha accesso al pannello admin.");
+      navigate("/area-associati", { replace: true });
+      setAwaitingRedirect(false);
+      return;
+    }
+
+    navigate(redirectPath || (isAdmin ? "/admin" : "/area-associati"), { replace: true });
+    setAwaitingRedirect(false);
+  }, [authLoading, awaitingRedirect, isAdmin, navigate, redirectPath, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +66,36 @@ export default function Auth() {
         const { error } = await signIn(email, password);
         if (error) throw error;
         toast.success("Accesso effettuato!");
-        navigate("/area-associati");
+        setAwaitingRedirect(true);
       } else {
-        const { error } = await signUp(email, password, fullName);
+        const { error, user: createdUser } = await signUp(email, password, fullName);
         if (error) throw error;
-        toast.success("Registrazione completata! Puoi accedere ora.");
+
+        try {
+          const { data: settings } = await supabase
+            .from("site_settings")
+            .select("email_confirm_welcome")
+            .limit(1)
+            .maybeSingle();
+
+          if ((settings as any)?.email_confirm_welcome !== false && createdUser?.email) {
+            await sendAppEmail({
+              templateName: "welcome-member",
+              recipientEmail: createdUser.email,
+              idempotencyKey: `welcome-${createdUser.id}`,
+              templateData: {
+                fullName,
+                email: createdUser.email,
+              },
+            });
+          }
+        } catch (emailError) {
+          console.error("Welcome email error", emailError);
+        }
+
+        toast.success("Registrazione completata! Controlla la tua email e poi accedi.");
+        setMode("login");
+        setPassword("");
       }
     } catch (err: any) {
       toast.error(err.message || "Errore durante l'autenticazione");
@@ -98,6 +153,7 @@ export default function Auth() {
             <div className="mt-6 text-center space-y-2">
               {mode === "login" && (
                 <>
+                  <p className="text-xs text-muted-foreground">Gli account admin vengono reindirizzati automaticamente a /admin dopo l'accesso.</p>
                   <button onClick={() => setMode("forgot")} className="text-sm text-primary hover:underline block w-full">Password dimenticata?</button>
                   <button onClick={() => setMode("register")} className="text-sm text-primary hover:underline block w-full">Non hai un account? Registrati</button>
                 </>
