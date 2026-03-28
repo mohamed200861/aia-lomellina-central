@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
 
 export default function ProtectedRoute({ children, requireAdmin, requireSuperAdmin }: Props) {
   const { user, isAdmin, isSuperAdmin, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -18,9 +19,11 @@ export default function ProtectedRoute({ children, requireAdmin, requireSuperAdm
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
-  if (requireSuperAdmin && !isSuperAdmin) return <Navigate to="/" replace />;
-  if (requireAdmin && !isAdmin) return <Navigate to="/" replace />;
+  const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
+
+  if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTarget)}`} replace />;
+  if (requireSuperAdmin && !isSuperAdmin) return <Navigate to="/area-associati?denied=super-admin" replace />;
+  if (requireAdmin && !isAdmin) return <Navigate to="/area-associati?denied=admin" replace />;
 
   return <>{children}</>;
 }

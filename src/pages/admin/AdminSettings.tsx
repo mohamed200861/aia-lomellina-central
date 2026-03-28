@@ -40,11 +40,13 @@ export default function AdminSettings() {
 
   const fields = [
     { section: "Contatti", items: [
+      { name: "site_name", label: "Nome Sito" },
       { name: "address", label: "Indirizzo" },
       { name: "phone1", label: "Telefono 1" },
       { name: "phone2", label: "Telefono 2 / WhatsApp" },
       { name: "email", label: "Email" },
       { name: "whatsapp", label: "WhatsApp" },
+      { name: "footer_text", label: "Testo Footer" },
     ]},
     { section: "Social", items: [
       { name: "facebook_url", label: "Facebook" },

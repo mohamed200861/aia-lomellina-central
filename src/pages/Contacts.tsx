@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Phone, Mail, MessageCircle, Send } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { sendAppEmail } from "@/lib/appEmail";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Nome obbligatorio").max(100),
@@ -29,13 +30,56 @@ export default function Contacts() {
   const { data: settings } = useSiteSettings();
 
   async function onSubmit(data: FormData) {
+    const submissionId = crypto.randomUUID();
     const { error } = await supabase.from("contact_submissions").insert([{
+      id: submissionId,
       name: data.name,
       email: data.email,
       subject: data.subject,
       message: data.message,
     }]);
     if (error) { toast.error("Errore nell'invio. Riprova."); return; }
+
+    try {
+      const { data: notificationSettings } = await supabase
+        .from("site_settings")
+        .select("notification_email_primary, notification_email_secondary, email_confirm_contact")
+        .limit(1)
+        .maybeSingle();
+
+      const configuredSettings = (notificationSettings as any) || {};
+      const adminRecipients = [configuredSettings.notification_email_primary, configuredSettings.notification_email_secondary].filter(Boolean);
+
+      await Promise.allSettled([
+        ...adminRecipients.map((recipient: string) =>
+          sendAppEmail({
+            templateName: "contact-admin",
+            recipientEmail: recipient,
+            idempotencyKey: `contact-admin-${submissionId}-${recipient}`,
+            templateData: {
+              name: data.name,
+              email: data.email,
+              subject: data.subject,
+              message: data.message,
+            },
+          })
+        ),
+        configuredSettings.email_confirm_contact !== false
+          ? sendAppEmail({
+              templateName: "contact-confirmation",
+              recipientEmail: data.email,
+              idempotencyKey: `contact-confirm-${submissionId}`,
+              templateData: {
+                name: data.name,
+                subject: data.subject,
+              },
+            })
+          : Promise.resolve(),
+      ]);
+    } catch (emailError) {
+      console.error("Contact form email error", emailError);
+    }
+
     toast.success("Messaggio inviato! Ti risponderemo il prima possibile.");
     form.reset();
   }

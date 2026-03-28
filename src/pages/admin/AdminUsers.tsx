@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Trash2, Search, UserCheck, UserX } from "lucide-react";
+import { Shield, Search, UserCheck, UserX } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
   super_admin: "Il Grande P",
@@ -27,53 +27,57 @@ export default function AdminUsers() {
   const { isSuperAdmin, user } = useAuth();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const qc = useQueryClient();
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const { data: roles, error } = await supabase.from("user_roles").select("*");
+      const { data, error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "list" },
+      });
       if (error) throw error;
-      const userIds = [...new Set(roles.map((r) => r.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", userIds);
-      return roles.map((r) => ({
-        ...r,
-        profile: profiles?.find((p) => p.user_id === r.user_id),
-      }));
+      return (data?.users ?? []) as Array<{
+        user_id: string;
+        email: string;
+        full_name: string | null;
+        created_at: string;
+        email_confirmed_at: string | null;
+        role: string;
+        is_active: boolean;
+      }>;
     },
   });
 
   const updateRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const { error } = await supabase.from("user_roles").update({ role: role as any }).eq("user_id", userId);
-      if (error) throw error;
-      // Log activity
-      await supabase.from("activity_log").insert({
-        action: "role_change",
-        entity_type: "user",
-        entity_id: userId,
-        user_id: user?.id,
-        details: { new_role: role },
+      const { error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "setRole", userId, role },
       });
+      if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-users"] }); toast.success("Ruolo aggiornato!"); },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const deleteRole = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("user_roles").delete().eq("id", id);
+  const updateActiveState = useMutation({
+    mutationFn: async ({ userId, active }: { userId: string; active: boolean }) => {
+      const { error } = await supabase.functions.invoke("admin-users", {
+        body: { action: "setActive", userId, active },
+      });
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-users"] }); toast.success("Utente rimosso!"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-users"] }); toast.success("Stato utente aggiornato!"); },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const roles = ["super_admin", "admin", "editor", "member"];
 
   const filtered = users?.filter((u) => {
-    const matchSearch = `${u.profile?.full_name || ""} ${u.user_id}`.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = `${u.full_name || ""} ${u.email} ${u.user_id}`.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === "all" || u.role === roleFilter;
-    return matchSearch && matchRole;
+    const matchStatus = statusFilter === "all" || (statusFilter === "active" ? u.is_active : !u.is_active);
+    return matchSearch && matchRole && matchStatus;
   });
 
   return (
@@ -95,26 +99,39 @@ export default function AdminUsers() {
           <option value="all">Tutti i ruoli</option>
           {roles.map((r) => <option key={r} value={r}>{roleLabels[r]}</option>)}
         </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="border rounded-md px-3 py-2 text-sm bg-background">
+          <option value="all">Tutti gli stati</option>
+          <option value="active">Attivi</option>
+          <option value="inactive">Disattivati</option>
+        </select>
       </div>
 
       {isLoading && <p className="text-muted-foreground">Caricamento...</p>}
 
       <div className="space-y-3">
         {filtered?.map((u) => (
-          <Card key={u.id} className="hover:shadow-sm transition-shadow">
+          <Card key={u.user_id} className="hover:shadow-sm transition-shadow">
             <CardContent className="p-4 flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <span className="text-sm font-bold text-primary">
-                    {(u.profile?.full_name || "?")[0].toUpperCase()}
+                    {(u.full_name || u.email || "?")[0].toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">{u.profile?.full_name || "Senza nome"}</h3>
-                  <p className="text-xs text-muted-foreground">{u.user_id.slice(0, 8)}…</p>
+                  <h3 className="font-bold text-sm">{u.full_name || "Senza nome"}</h3>
+                  <p className="text-xs text-muted-foreground">{u.email}</p>
                   <p className="text-xs text-muted-foreground">
                     Registrato: {new Date(u.created_at).toLocaleDateString("it-IT")}
                   </p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className={`text-[11px] px-2 py-1 rounded-full ${u.email_confirmed_at ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}>
+                      {u.email_confirmed_at ? "Email verificata" : "Email non verificata"}
+                    </span>
+                    <span className={`text-[11px] px-2 py-1 rounded-full ${u.is_active ? "bg-secondary text-secondary-foreground" : "bg-destructive/10 text-destructive"}`}>
+                      {u.is_active ? "Attivo" : "Disattivato"}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -134,8 +151,16 @@ export default function AdminUsers() {
                     >
                       {roles.map((r) => <option key={r} value={r}>{roleLabels[r]}</option>)}
                     </select>
-                    <Button size="sm" variant="destructive" onClick={() => { if (confirm("Rimuovere questo utente dal sistema?")) deleteRole.mutate(u.id); }}>
-                      <Trash2 className="h-4 w-4" />
+                    <Button
+                      size="sm"
+                      variant={u.is_active ? "destructive" : "secondary"}
+                      onClick={() => {
+                        if (confirm(u.is_active ? "Disattivare questo utente?" : "Riattivare questo utente?")) {
+                          updateActiveState.mutate({ userId: u.user_id, active: !u.is_active });
+                        }
+                      }}
+                    >
+                      {u.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                     </Button>
                   </>
                 )}

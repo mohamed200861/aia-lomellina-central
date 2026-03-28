@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { sendAppEmail } from "@/lib/appEmail";
 
 export default function MembersJustify() {
   const { user } = useAuth();
@@ -26,14 +27,68 @@ export default function MembersJustify() {
     e.preventDefault();
     setLoading(true);
     const fd = new FormData(e.currentTarget);
+    const submissionId = crypto.randomUUID();
+    const fullName = fd.get("full_name") as string;
+    const reason = fd.get("reason") as string;
+    const rtoDateId = fd.get("rto_date_id") as string || null;
+
     const { error } = await supabase.from("absence_justifications").insert({
+      id: submissionId,
       user_id: user!.id,
-      full_name: fd.get("full_name") as string,
-      rto_date_id: fd.get("rto_date_id") as string || null,
-      reason: fd.get("reason") as string,
+      full_name: fullName,
+      rto_date_id: rtoDateId,
+      reason,
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
+
+    try {
+      const [{ data: notificationSettings }, selectedRto] = await Promise.all([
+        supabase
+          .from("site_settings")
+          .select("notification_email_primary, notification_email_secondary, email_confirm_absence")
+          .limit(1)
+          .maybeSingle(),
+        rtoDateId
+          ? supabase.from("rto_dates").select("title, rto_date").eq("id", rtoDateId).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      const configuredSettings = (notificationSettings as any) || {};
+      const adminRecipients = [configuredSettings.notification_email_primary, configuredSettings.notification_email_secondary].filter(Boolean);
+
+      await Promise.allSettled([
+        ...adminRecipients.map((recipient: string) =>
+          sendAppEmail({
+            templateName: "absence-admin",
+            recipientEmail: recipient,
+            idempotencyKey: `absence-admin-${submissionId}-${recipient}`,
+            templateData: {
+              fullName,
+              reason,
+              rtoTitle: (selectedRto.data as any)?.title || "RTO non specificato",
+              rtoDate: (selectedRto.data as any)?.rto_date || "",
+              memberEmail: user?.email || "",
+            },
+          })
+        ),
+        configuredSettings.email_confirm_absence !== false && user?.email
+          ? sendAppEmail({
+              templateName: "absence-confirmation",
+              recipientEmail: user.email,
+              idempotencyKey: `absence-confirm-${submissionId}`,
+              templateData: {
+                fullName,
+                rtoTitle: (selectedRto.data as any)?.title || "RTO non specificato",
+                rtoDate: (selectedRto.data as any)?.rto_date || "",
+              },
+            })
+          : Promise.resolve(),
+      ]);
+    } catch (emailError) {
+      console.error("Absence email error", emailError);
+    }
+
     toast.success("Giustificazione inviata!");
     (e.target as HTMLFormElement).reset();
   };

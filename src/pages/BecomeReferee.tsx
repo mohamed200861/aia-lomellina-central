@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, ArrowRight } from "lucide-react";
+import { sendAppEmail } from "@/lib/appEmail";
 
 const schema = z.object({
   first_name: z.string().trim().min(2, "Il nome è obbligatorio").max(50),
@@ -30,7 +31,9 @@ export default function BecomeReferee() {
   });
 
   async function onSubmit(data: FormData) {
+    const submissionId = crypto.randomUUID();
     const { error } = await supabase.from("course_registrations").insert({
+      id: submissionId,
       first_name: data.first_name,
       last_name: data.last_name,
       email: data.email,
@@ -39,6 +42,49 @@ export default function BecomeReferee() {
       notes: data.notes || null,
     });
     if (error) { toast.error("Errore nell'invio. Riprova."); return; }
+
+    try {
+      const { data: settings } = await supabase
+        .from("site_settings")
+        .select("notification_email_primary, notification_email_secondary, email_confirm_course")
+        .limit(1)
+        .maybeSingle();
+
+      const configuredSettings = (settings as any) || {};
+      const adminRecipients = [configuredSettings.notification_email_primary, configuredSettings.notification_email_secondary].filter(Boolean);
+
+      await Promise.allSettled([
+        ...adminRecipients.map((recipient: string) =>
+          sendAppEmail({
+            templateName: "course-registration-admin",
+            recipientEmail: recipient,
+            idempotencyKey: `course-admin-${submissionId}-${recipient}`,
+            templateData: {
+              firstName: data.first_name,
+              lastName: data.last_name,
+              email: data.email,
+              phone: data.phone,
+              birthDate: data.birth_date,
+              notes: data.notes || "",
+            },
+          })
+        ),
+        configuredSettings.email_confirm_course !== false
+          ? sendAppEmail({
+              templateName: "course-registration-confirmation",
+              recipientEmail: data.email,
+              idempotencyKey: `course-confirm-${submissionId}`,
+              templateData: {
+                firstName: data.first_name,
+                lastName: data.last_name,
+              },
+            })
+          : Promise.resolve(),
+      ]);
+    } catch (emailError) {
+      console.error("Course registration email error", emailError);
+    }
+
     toast.success(`Grazie ${data.first_name}, iscrizione inviata! Ti contatteremo presto.`);
     form.reset();
   }

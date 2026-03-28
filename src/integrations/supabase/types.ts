@@ -226,6 +226,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          cta_label: string | null
+          footer_note: string | null
+          heading: string | null
+          id: string
+          is_enabled: boolean
+          name: string
+          subject: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          cta_label?: string | null
+          footer_note?: string | null
+          heading?: string | null
+          id?: string
+          is_enabled?: boolean
+          name: string
+          subject: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          cta_label?: string | null
+          footer_note?: string | null
+          heading?: string | null
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
@@ -617,14 +659,25 @@ export type Database = {
         Row: {
           address: string | null
           email: string | null
+          email_confirm_absence: boolean
+          email_confirm_contact: boolean
+          email_confirm_course: boolean
+          email_confirm_welcome: boolean
           facebook_url: string | null
+          footer_text: string | null
           hero_subtitle: string | null
           hero_title: string | null
           id: string
           instagram_url: string | null
+          logo_url: string | null
           next_course_date: string | null
+          notification_email_primary: string | null
+          notification_email_secondary: string | null
           phone1: string | null
           phone2: string | null
+          sender_email: string | null
+          sender_name: string | null
+          site_name: string | null
           telegram_url: string | null
           updated_at: string
           whatsapp: string | null
@@ -634,14 +687,25 @@ export type Database = {
         Insert: {
           address?: string | null
           email?: string | null
+          email_confirm_absence?: boolean
+          email_confirm_contact?: boolean
+          email_confirm_course?: boolean
+          email_confirm_welcome?: boolean
           facebook_url?: string | null
+          footer_text?: string | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
           instagram_url?: string | null
+          logo_url?: string | null
           next_course_date?: string | null
+          notification_email_primary?: string | null
+          notification_email_secondary?: string | null
           phone1?: string | null
           phone2?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          site_name?: string | null
           telegram_url?: string | null
           updated_at?: string
           whatsapp?: string | null
@@ -651,14 +715,25 @@ export type Database = {
         Update: {
           address?: string | null
           email?: string | null
+          email_confirm_absence?: boolean
+          email_confirm_contact?: boolean
+          email_confirm_course?: boolean
+          email_confirm_welcome?: boolean
           facebook_url?: string | null
+          footer_text?: string | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
           instagram_url?: string | null
+          logo_url?: string | null
           next_course_date?: string | null
+          notification_email_primary?: string | null
+          notification_email_secondary?: string | null
           phone1?: string | null
           phone2?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          site_name?: string | null
           telegram_url?: string | null
           updated_at?: string
           whatsapp?: string | null
