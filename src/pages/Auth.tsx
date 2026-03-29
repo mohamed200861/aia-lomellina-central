@@ -30,6 +30,13 @@ export default function Auth() {
     return requested?.startsWith("/") ? requested : null;
   }, [location.search]);
 
+  // If user is already logged in and not awaiting a form submission redirect
+  useEffect(() => {
+    if (authLoading || !user || awaitingRedirect) return;
+    // Already logged in, redirect immediately
+    navigate(redirectPath || (isAdmin ? "/admin" : "/area-associati"), { replace: true });
+  }, [authLoading, user, isAdmin, navigate, redirectPath, awaitingRedirect]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const denied = params.get("denied");
