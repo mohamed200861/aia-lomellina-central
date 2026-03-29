@@ -80,7 +80,7 @@ export default function Index() {
                 </Button>
               </Link>
               <Link to="/chi-siamo">
-                <Button size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 font-bold text-base px-8">
+                <Button size="lg" variant="outline" className="border-2 border-white text-white bg-white/10 hover:bg-white/20 font-bold text-base px-8">
                   Scopri di più
                 </Button>
               </Link>
@@ -135,8 +135,8 @@ export default function Index() {
         <div className="container mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: 150, suffix: "+", label: "Arbitri Attivi" },
-              { value: 50, suffix: "+", label: "Anni di Storia" },
+              { value: 81, suffix: "+", label: "Arbitri Attivi" },
+              { value: 25, suffix: "+", label: "Anni di Tradizione Arbitrale" },
               { value: 1200, suffix: "+", label: "Gare Arbitrate / Anno" },
               { value: 30, suffix: "+", label: "Nuovi Arbitri / Anno" },
             ].map((stat, i) => (
@@ -166,7 +166,7 @@ export default function Index() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <span className="inline-block px-3 py-1 bg-secondary/20 text-secondary-foreground rounded-full text-xs font-semibold mb-4">
+              <span className="inline-block px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-xs font-semibold mb-4">
                 CORSO ARBITRI
               </span>
               <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
