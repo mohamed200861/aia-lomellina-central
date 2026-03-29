@@ -179,7 +179,7 @@ export default function Header() {
                 <Button className="w-full bg-secondary text-secondary-foreground font-bold" size="sm">Iscriviti al Corso</Button>
               </Link>
               <Link to="/area-associati" className="flex-1" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" variant="outline" size="sm">Area Associati</Button>
+                <Button className="w-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold" size="sm">Area Associati</Button>
               </Link>
             </div>
             <div className="flex justify-center gap-3 pt-3">
