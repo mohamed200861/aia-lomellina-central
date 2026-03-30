@@ -20,7 +20,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [awaitingRedirect, setAwaitingRedirect] = useState(false);
-  const { signIn, signUp, user, isAdmin, loading: authLoading } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,9 +33,9 @@ export default function Auth() {
   // If user is already logged in and not awaiting a form submission redirect
   useEffect(() => {
     if (authLoading || !user || awaitingRedirect) return;
-    // Already logged in, redirect immediately
-    navigate(redirectPath || (isAdmin ? "/admin" : "/area-associati"), { replace: true });
-  }, [authLoading, user, isAdmin, navigate, redirectPath, awaitingRedirect]);
+    // Members login always goes to members area
+    navigate(redirectPath || "/area-associati", { replace: true });
+  }, [authLoading, user, navigate, redirectPath, awaitingRedirect]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -47,16 +47,9 @@ export default function Auth() {
   useEffect(() => {
     if (!awaitingRedirect || authLoading || !user) return;
 
-    if (redirectPath?.startsWith("/admin") && !isAdmin) {
-      toast.error("Il tuo account non ha accesso al pannello admin.");
-      navigate("/area-associati", { replace: true });
-      setAwaitingRedirect(false);
-      return;
-    }
-
-    navigate(redirectPath || (isAdmin ? "/admin" : "/area-associati"), { replace: true });
+    navigate(redirectPath || "/area-associati", { replace: true });
     setAwaitingRedirect(false);
-  }, [authLoading, awaitingRedirect, isAdmin, navigate, redirectPath, user]);
+  }, [authLoading, awaitingRedirect, navigate, redirectPath, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,7 +153,7 @@ export default function Auth() {
             <div className="mt-6 text-center space-y-2">
               {mode === "login" && (
                 <>
-                  <p className="text-xs text-muted-foreground">Gli account admin vengono reindirizzati automaticamente a /admin dopo l'accesso.</p>
+                  <p className="text-xs text-muted-foreground">Accesso riservato agli associati della sezione.</p>
                   <button onClick={() => setMode("forgot")} className="text-sm text-primary hover:underline block w-full">Password dimenticata?</button>
                   <button onClick={() => setMode("register")} className="text-sm text-primary hover:underline block w-full">Non hai un account? Registrati</button>
                 </>
