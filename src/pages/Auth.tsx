@@ -153,7 +153,7 @@ export default function Auth() {
             <div className="mt-6 text-center space-y-2">
               {mode === "login" && (
                 <>
-                  <p className="text-xs text-muted-foreground">Gli account admin vengono reindirizzati automaticamente a /admin dopo l'accesso.</p>
+                  <p className="text-xs text-muted-foreground">Accesso riservato agli associati della sezione.</p>
                   <button onClick={() => setMode("forgot")} className="text-sm text-primary hover:underline block w-full">Password dimenticata?</button>
                   <button onClick={() => setMode("register")} className="text-sm text-primary hover:underline block w-full">Non hai un account? Registrati</button>
                 </>
