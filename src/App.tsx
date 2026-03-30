@@ -18,6 +18,7 @@ import MediaPage from "./pages/MediaPage";
 import PressReview from "./pages/PressReview";
 import Contacts from "./pages/Contacts";
 import Auth from "./pages/Auth";
+import AdminLogin from "./pages/AdminLogin";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/rassegna-stampa" element={<PressReview />} />
             <Route path="/contatti" element={<Contacts />} />
             <Route path="/login" element={<Auth />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Members Area */}
