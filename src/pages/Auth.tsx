@@ -49,7 +49,7 @@ export default function Auth() {
 
     navigate(redirectPath || "/area-associati", { replace: true });
     setAwaitingRedirect(false);
-  }, [authLoading, awaitingRedirect, isAdmin, navigate, redirectPath, user]);
+  }, [authLoading, awaitingRedirect, navigate, redirectPath, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
