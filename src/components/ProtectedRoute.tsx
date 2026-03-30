@@ -21,9 +21,10 @@ export default function ProtectedRoute({ children, requireAdmin, requireSuperAdm
 
   const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
 
+  if (!user && (requireAdmin || requireSuperAdmin)) return <Navigate to="/admin/login" replace />;
   if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTarget)}`} replace />;
-  if (requireSuperAdmin && !isSuperAdmin) return <Navigate to="/area-associati?denied=super-admin" replace />;
-  if (requireAdmin && !isAdmin) return <Navigate to="/area-associati?denied=admin" replace />;
+  if (requireSuperAdmin && !isSuperAdmin) return <Navigate to="/admin/login" replace />;
+  if (requireAdmin && !isAdmin) return <Navigate to="/admin/login" replace />;
 
   return <>{children}</>;
 }
