@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Newspaper, Calendar, MessageSquare, BookOpen, Archive, Shield, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -74,7 +75,7 @@ export default function AdminDashboard() {
                   <s.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold font-heading">{s.value ?? "—"}</p>
+                  <p className="text-2xl font-bold font-heading">{s.value !== undefined ? s.value : <Skeleton className="h-7 w-10" />}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               </CardContent>

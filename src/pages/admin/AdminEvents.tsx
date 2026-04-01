@@ -49,10 +49,15 @@ export default function AdminEvents() {
       const { error } = await supabase.from("events").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-events"] });
-      toast.success("Evento eliminato!");
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["admin-events"] });
+      const prev = qc.getQueryData(["admin-events"]);
+      qc.setQueryData(["admin-events"], (old: any[]) => old?.filter((e) => e.id !== id));
+      return { prev };
     },
+    onError: (_e, _id, ctx) => { if (ctx?.prev) qc.setQueryData(["admin-events"], ctx.prev); toast.error("Errore"); },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["admin-events"] }); },
+    onSuccess: () => toast.success("Evento eliminato!"),
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
