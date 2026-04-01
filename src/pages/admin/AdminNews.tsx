@@ -48,7 +48,15 @@ export default function AdminNews() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("news").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-news"] }); toast.success("News eliminata!"); },
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["admin-news"] });
+      const prev = qc.getQueryData(["admin-news"]);
+      qc.setQueryData(["admin-news"], (old: any[]) => old?.filter((n) => n.id !== id));
+      return { prev };
+    },
+    onError: (_e, _id, ctx) => { if (ctx?.prev) qc.setQueryData(["admin-news"], ctx.prev); toast.error("Errore durante l'eliminazione"); },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["admin-news"] }); qc.invalidateQueries({ queryKey: ["public-news"] }); },
+    onSuccess: () => toast.success("News eliminata!"),
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

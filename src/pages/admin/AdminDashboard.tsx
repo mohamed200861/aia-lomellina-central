@@ -75,7 +75,7 @@ export default function AdminDashboard() {
                   <s.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold font-heading">{s.value ?? "—"}</p>
+                  <p className="text-2xl font-bold font-heading">{s.value !== undefined ? s.value : <Skeleton className="h-7 w-10" />}</p>
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                 </div>
               </CardContent>
