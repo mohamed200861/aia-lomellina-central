@@ -39,6 +39,7 @@ export default function AdminNews() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-news"] });
+      qc.invalidateQueries({ queryKey: ["public-news"] });
       setOpen(false); setEditing(null); setImageUrl("");
       toast.success("News salvata!");
     },
