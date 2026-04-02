@@ -9,33 +9,41 @@ import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
   const { loading: authLoading, isAdmin } = useAuth();
+  const ready = !authLoading && isAdmin;
   const { data: newsCount } = useQuery({
     queryKey: ["admin-news-count"],
     queryFn: async () => { const { count } = await supabase.from("news").select("*", { count: "exact", head: true }); return count ?? 0; },
+    enabled: ready,
   });
   const { data: eventsCount } = useQuery({
     queryKey: ["admin-events-count"],
     queryFn: async () => { const { count } = await supabase.from("events").select("*", { count: "exact", head: true }); return count ?? 0; },
+    enabled: ready,
   });
   const { data: regsCount } = useQuery({
     queryKey: ["admin-regs-count"],
     queryFn: async () => { const { count } = await supabase.from("course_registrations").select("*", { count: "exact", head: true }).eq("status", "new"); return count ?? 0; },
+    enabled: ready,
   });
   const { data: msgsCount } = useQuery({
     queryKey: ["admin-msgs-count"],
     queryFn: async () => { const { count } = await supabase.from("contact_submissions").select("*", { count: "exact", head: true }).eq("status", "new"); return count ?? 0; },
+    enabled: ready,
   });
   const { data: refereesCount } = useQuery({
     queryKey: ["admin-referees-count"],
     queryFn: async () => { const { count } = await supabase.from("referees").select("*", { count: "exact", head: true }); return count ?? 0; },
+    enabled: ready,
   });
   const { data: justCount } = useQuery({
     queryKey: ["admin-just-count"],
     queryFn: async () => { const { count } = await supabase.from("absence_justifications").select("*", { count: "exact", head: true }).eq("status", "pending"); return count ?? 0; },
+    enabled: ready,
   });
   const { data: usersCount } = useQuery({
     queryKey: ["admin-users-count"],
     queryFn: async () => { const { count } = await supabase.from("user_roles").select("*", { count: "exact", head: true }); return count ?? 0; },
+    enabled: ready,
   });
 
   const stats = [
