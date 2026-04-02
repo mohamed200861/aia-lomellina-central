@@ -17,6 +17,7 @@ export default function AdminNews() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState("");
+  const qc = useQueryClient();
   const { loading: authLoading, isAdmin } = useAuth();
 
   const { data: news, isLoading } = useQuery({
