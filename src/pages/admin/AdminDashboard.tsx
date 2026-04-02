@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,6 +8,7 @@ import { Newspaper, Calendar, MessageSquare, BookOpen, Archive, Shield, Mail } f
 import { Link } from "react-router-dom";
 
 export default function AdminDashboard() {
+  const { loading: authLoading, isAdmin } = useAuth();
   const { data: newsCount } = useQuery({
     queryKey: ["admin-news-count"],
     queryFn: async () => { const { count } = await supabase.from("news").select("*", { count: "exact", head: true }); return count ?? 0; },
