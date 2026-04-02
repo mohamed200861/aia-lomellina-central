@@ -61,7 +61,7 @@ export default function AdminAthletic() {
     saveMutation.mutate(values);
   };
 
-  const categories: Record<string, string> = { polo: "Polo Atletico", yoyo: "Test Yo-Yo", sds: "Test SDS", general: "Generale" };
+  const categories: Record<string, string> = { polo: "Polo Atletico", "yo-yo": "Test Yo-Yo", yoyo: "Test Yo-Yo", sds: "Test SDS", training: "Allenamento", general: "Generale" };
 
   return (
     <AdminLayout>
