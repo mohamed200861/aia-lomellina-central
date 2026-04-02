@@ -17,7 +17,7 @@ export default function AdminNews() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState("");
-  const qc = useQueryClient();
+  const { loading: authLoading, isAdmin } = useAuth();
 
   const { data: news, isLoading } = useQuery({
     queryKey: ["admin-news"],
@@ -26,6 +26,7 @@ export default function AdminNews() {
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading && isAdmin,
   });
 
   const saveMutation = useMutation({

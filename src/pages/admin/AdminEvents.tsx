@@ -16,6 +16,7 @@ export default function AdminEvents() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const qc = useQueryClient();
+  const { loading: authLoading, isAdmin } = useAuth();
 
   const { data: events, isLoading } = useQuery({
     queryKey: ["admin-events"],
@@ -24,6 +25,7 @@ export default function AdminEvents() {
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading && isAdmin,
   });
 
   const saveMutation = useMutation({
