@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 
@@ -14,14 +16,16 @@ export default function AdminReferees() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
+  const { loading: authLoading } = useAuth();
 
-  const { data: referees } = useQuery({
+  const { data: referees, isLoading, error } = useQuery({
     queryKey: ["admin-referees"],
     queryFn: async () => {
       const { data, error } = await supabase.from("referees").select("*").order("last_name");
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading,
   });
 
   const saveMutation = useMutation({
@@ -86,27 +90,40 @@ export default function AdminReferees() {
         <Input placeholder="Cerca..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead><tr className="bg-muted"><th className="p-3 text-left">Cognome</th><th className="p-3 text-left">Nome</th><th className="p-3">Qualifica</th><th className="p-3">OT</th><th className="p-3 w-20"></th></tr></thead>
-          <tbody>
-            {filtered.map((r) => (
-              <tr key={r.id} className="border-t hover:bg-muted/50">
-                <td className="p-3 font-medium">{r.last_name}</td>
-                <td className="p-3">{r.first_name}</td>
-                <td className="p-3 text-center">{r.qualification}</td>
-                <td className="p-3 text-center">{r.technical_body}</td>
-                <td className="p-3">
-                  <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="h-3 w-3" /></Button>
-                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm("Eliminare?")) deleteMutation.mutate(r.id); }}><Trash2 className="h-3 w-3" /></Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {isLoading && (
+        <div className="space-y-2">
+          {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      )}
+
+      {error && <p className="text-destructive text-center py-8">Errore nel caricamento: {(error as Error).message}</p>}
+
+      {!isLoading && !error && (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead><tr className="bg-muted"><th className="p-3 text-left">Cognome</th><th className="p-3 text-left">Nome</th><th className="p-3">Qualifica</th><th className="p-3">OT</th><th className="p-3 w-20"></th></tr></thead>
+            <tbody>
+              {filtered.map((r) => (
+                <tr key={r.id} className="border-t hover:bg-muted/50">
+                  <td className="p-3 font-medium">{r.last_name}</td>
+                  <td className="p-3">{r.first_name}</td>
+                  <td className="p-3 text-center">{r.qualification}</td>
+                  <td className="p-3 text-center">{r.technical_body}</td>
+                  <td className="p-3">
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}><Pencil className="h-3 w-3" /></Button>
+                      <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm("Eliminare?")) deleteMutation.mutate(r.id); }}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nessun arbitro trovato.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </AdminLayout>
   );
 }

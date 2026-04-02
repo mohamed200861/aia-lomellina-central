@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ export default function AdminNews() {
   const [editing, setEditing] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState("");
   const qc = useQueryClient();
+  const { loading: authLoading, isAdmin } = useAuth();
 
   const { data: news, isLoading } = useQuery({
     queryKey: ["admin-news"],
@@ -25,6 +27,7 @@ export default function AdminNews() {
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading && isAdmin,
   });
 
   const saveMutation = useMutation({

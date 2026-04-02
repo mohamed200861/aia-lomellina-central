@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ export default function AdminEvents() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const qc = useQueryClient();
+  const { loading: authLoading, isAdmin } = useAuth();
 
   const { data: events, isLoading } = useQuery({
     queryKey: ["admin-events"],
@@ -23,6 +25,7 @@ export default function AdminEvents() {
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading && isAdmin,
   });
 
   const saveMutation = useMutation({

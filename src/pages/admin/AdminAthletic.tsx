@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import FileUpload from "@/components/admin/FileUpload";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
@@ -17,14 +19,16 @@ export default function AdminAthletic() {
   const [editing, setEditing] = useState<any>(null);
   const [fileUrl, setFileUrl] = useState("");
   const qc = useQueryClient();
+  const { loading: authLoading } = useAuth();
 
-  const { data: content } = useQuery({
+  const { data: content, isLoading, error } = useQuery({
     queryKey: ["admin-athletic"],
     queryFn: async () => {
       const { data, error } = await supabase.from("athletic_content").select("*").order("sort_order");
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading,
   });
 
   const saveMutation = useMutation({
@@ -61,14 +65,25 @@ export default function AdminAthletic() {
     saveMutation.mutate(values);
   };
 
-  const categories: Record<string, string> = { polo: "Polo Atletico", yoyo: "Test Yo-Yo", sds: "Test SDS", general: "Generale" };
+  // Map all possible DB category values to display labels
+  const categoryLabels: Record<string, string> = {
+    polo: "Polo Atletico",
+    "yo-yo": "Test Yo-Yo",
+    yoyo: "Test Yo-Yo",
+    sds: "Test SDS",
+    training: "Allenamento",
+    general: "Generale",
+  };
+
+  // Get unique categories from actual data
+  const usedCategories = [...new Set(content?.map((c) => c.category || "general") || [])];
 
   return (
     <AdminLayout>
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-heading font-bold">Area Atletica</h1>
-          <p className="text-muted-foreground">Gestisci contenuti, file audio e PDF dell'area atletica</p>
+          <p className="text-sm text-muted-foreground">{content?.length ?? 0} contenuti</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditing(null); setFileUrl(""); } }}>
           <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" /> Aggiungi</Button></DialogTrigger>
@@ -78,7 +93,11 @@ export default function AdminAthletic() {
               <div><Label>Titolo</Label><Input name="title" defaultValue={editing?.title} required /></div>
               <div><Label>Categoria</Label>
                 <select name="category" defaultValue={editing?.category || "general"} className="w-full border rounded-md px-3 py-2 text-sm bg-background">
-                  {Object.entries(categories).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  <option value="polo">Polo Atletico</option>
+                  <option value="yo-yo">Test Yo-Yo</option>
+                  <option value="sds">Test SDS</option>
+                  <option value="training">Allenamento</option>
+                  <option value="general">Generale</option>
                 </select>
               </div>
               <div><Label>Contenuto</Label><Textarea name="content" rows={6} defaultValue={editing?.content} /></div>
@@ -99,17 +118,26 @@ export default function AdminAthletic() {
                 </label>
                 <div><Label>Ordine</Label><Input name="sort_order" type="number" defaultValue={editing?.sort_order || 0} className="w-20" /></div>
               </div>
-              <Button type="submit" disabled={saveMutation.isPending}>Salva</Button>
+              <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? "Salvataggio..." : "Salva"}</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
-      {Object.entries(categories).map(([key, label]) => {
-        const items = content?.filter((c) => c.category === key);
+
+      {isLoading && (
+        <div className="space-y-4">
+          {[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+        </div>
+      )}
+
+      {error && <p className="text-destructive text-center py-8">Errore nel caricamento: {(error as Error).message}</p>}
+
+      {!isLoading && !error && usedCategories.map((key) => {
+        const items = content?.filter((c) => (c.category || "general") === key);
         if (!items?.length) return null;
         return (
           <div key={key} className="mb-6">
-            <h2 className="font-heading font-bold text-lg mb-3">{label}</h2>
+            <h2 className="font-heading font-bold text-lg mb-3">{categoryLabels[key] || key}</h2>
             <div className="space-y-2">
               {items.map((c) => (
                 <Card key={c.id}>
@@ -133,7 +161,10 @@ export default function AdminAthletic() {
           </div>
         );
       })}
-      {(!content || content.length === 0) && <p className="text-center text-muted-foreground py-8">Nessun contenuto atletico. Aggiungi il primo!</p>}
+
+      {!isLoading && !error && (!content || content.length === 0) && (
+        <p className="text-center text-muted-foreground py-8">Nessun contenuto atletico. Aggiungi il primo!</p>
+      )}
     </AdminLayout>
   );
 }

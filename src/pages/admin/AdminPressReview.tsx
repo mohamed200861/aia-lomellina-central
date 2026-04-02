@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
@@ -14,14 +16,16 @@ export default function AdminPressReview() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const { loading: authLoading } = useAuth();
 
-  const { data: articles } = useQuery({
+  const { data: articles, isLoading, error } = useQuery({
     queryKey: ["admin-press-review"],
     queryFn: async () => {
       const { data, error } = await supabase.from("press_review").select("*").order("article_date", { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading,
   });
 
   const saveMutation = useMutation({
@@ -66,7 +70,7 @@ export default function AdminPressReview() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-heading font-bold">Rassegna Stampa</h1>
-          <p className="text-muted-foreground">Gestisci gli articoli della rassegna stampa</p>
+          <p className="text-sm text-muted-foreground">{articles?.length ?? 0} articoli</p>
         </div>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
           <DialogTrigger asChild>
@@ -85,7 +89,15 @@ export default function AdminPressReview() {
         </Dialog>
       </div>
 
-      {years.map((year) => (
+      {isLoading && (
+        <div className="space-y-3">
+          {[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+        </div>
+      )}
+
+      {error && <p className="text-destructive text-center py-8">Errore nel caricamento: {(error as Error).message}</p>}
+
+      {!isLoading && !error && years.map((year) => (
         <div key={year} className="mb-8">
           <h2 className="font-heading font-bold text-lg mb-3">{year}</h2>
           <div className="space-y-2">
@@ -108,6 +120,10 @@ export default function AdminPressReview() {
           </div>
         </div>
       ))}
+
+      {!isLoading && !error && articles?.length === 0 && (
+        <p className="text-center text-muted-foreground py-8">Nessun articolo in rassegna stampa.</p>
+      )}
     </AdminLayout>
   );
 }
