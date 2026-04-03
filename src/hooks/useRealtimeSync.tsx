@@ -8,12 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const TABLE_QUERY_MAP: Record<string, string[]> = {
   news: ["public-news", "admin-news", "admin-news-count"],
-  events: ["admin-events", "admin-events-count"],
-  staff_members: ["admin-staff", "public-staff"],
-  referees: ["admin-referees", "public-referees", "admin-referees-count"],
+  events: ["admin-events", "admin-events-count", "public-events"],
+  staff_members: ["admin-staff", "staff"],
+  referees: ["admin-referees", "referees-list", "admin-referees-count"],
   media: ["admin-media", "public-media"],
-  press_review: ["admin-press-review", "public-press-review"],
-  rto_dates: ["admin-rto", "member-rto"],
+  press_review: ["admin-press-review", "press-review"],
+  rto_dates: ["admin-rto", "member-rto", "rto-for-justify"],
   reimbursement_rules: ["admin-reimbursements", "member-reimbursements"],
   report_settings: ["admin-reports", "member-reports"],
   medical_centers: ["admin-medical", "member-medical"],
@@ -23,7 +23,8 @@ const TABLE_QUERY_MAP: Record<string, string[]> = {
   contact_submissions: ["admin-submissions", "admin-msgs-count"],
   course_registrations: ["admin-registrations", "admin-regs-count"],
   absence_justifications: ["admin-justifications", "admin-just-count"],
-  site_settings: ["site-settings"],
+  site_settings: ["site-settings", "email-settings-site"],
+  email_templates: ["email-settings-templates"],
   user_roles: ["admin-users", "admin-users-count"],
 };
 
@@ -38,7 +39,7 @@ export function useRealtimeSync() {
         { event: "*", schema: "public" },
         (payload) => {
           const table = payload.table;
-          const keys = TABLE_QUERY_MAP[table];
+          const keys = [...new Set(TABLE_QUERY_MAP[table] ?? [])];
           if (keys) {
             keys.forEach((key) => {
               qc.invalidateQueries({ queryKey: [key] });

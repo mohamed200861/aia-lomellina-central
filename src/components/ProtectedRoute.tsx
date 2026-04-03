@@ -10,6 +10,8 @@ interface Props {
 export default function ProtectedRoute({ children, requireAdmin, requireSuperAdmin }: Props) {
   const { user, isAdmin, isSuperAdmin, loading } = useAuth();
   const location = useLocation();
+  const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
+  const adminLoginUrl = `/admin/login?redirect=${encodeURIComponent(redirectTarget)}`;
 
   if (loading) {
     return (
@@ -19,12 +21,10 @@ export default function ProtectedRoute({ children, requireAdmin, requireSuperAdm
     );
   }
 
-  const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
-
-  if (!user && (requireAdmin || requireSuperAdmin)) return <Navigate to="/admin/login" replace />;
+  if (!user && (requireAdmin || requireSuperAdmin)) return <Navigate to={adminLoginUrl} replace />;
   if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTarget)}`} replace />;
-  if (requireSuperAdmin && !isSuperAdmin) return <Navigate to="/admin/login" replace />;
-  if (requireAdmin && !isAdmin) return <Navigate to="/admin/login" replace />;
+  if (requireSuperAdmin && !isSuperAdmin) return <Navigate to="/admin" replace />;
+  if (requireAdmin && !isAdmin) return <Navigate to="/area-associati" replace />;
 
   return <>{children}</>;
 }
