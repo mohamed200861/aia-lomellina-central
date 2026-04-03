@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +18,24 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const { signIn, user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectPath = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const requested = params.get("redirect");
+    return requested?.startsWith("/admin") ? requested : "/admin";
+  }, [location.search]);
 
   // If already logged in as admin, go to /admin
   useEffect(() => {
     if (authLoading || !user) return;
     if (isAdmin) {
-      navigate("/admin", { replace: true });
+      navigate(redirectPath, { replace: true });
+      return;
     }
-  }, [authLoading, user, isAdmin, navigate]);
+    toast.error("Accesso negato. Questo login è riservato agli amministratori.");
+    navigate("/area-associati", { replace: true });
+  }, [authLoading, user, isAdmin, navigate, redirectPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +51,6 @@ export default function AdminLogin() {
       } else {
         const { error } = await signIn(email, password);
         if (error) throw error;
-        // Role check happens in useEffect above after auth state updates
       }
     } catch (err: any) {
       toast.error(err.message || "Errore durante l'autenticazione");
@@ -49,15 +58,6 @@ export default function AdminLogin() {
       setLoading(false);
     }
   };
-
-  // After login, check if user is admin
-  useEffect(() => {
-    if (authLoading || !user) return;
-    if (!isAdmin) {
-      toast.error("Accesso negato. Questo login è riservato agli amministratori.");
-      supabase.auth.signOut();
-    }
-  }, [authLoading, user, isAdmin]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4">

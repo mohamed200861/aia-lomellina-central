@@ -25,49 +25,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchRoles = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
-    const nextRoles = data?.map((r) => r.role as AppRole) ?? [];
-    setRoles(nextRoles);
-    return nextRoles;
+    if (error) throw error;
+    return data?.map((r) => r.role as AppRole) ?? [];
   }, []);
-
-  const syncSessionState = useCallback(async (nextSession: Session | null) => {
-    setSession(nextSession);
-    setUser(nextSession?.user ?? null);
-
-    if (nextSession?.user) {
-      await fetchRoles(nextSession.user.id);
-    } else {
-      setRoles([]);
-    }
-
-    setLoading(false);
-  }, [fetchRoles]);
 
   useEffect(() => {
     let isMounted = true;
+    let requestVersion = 0;
 
-    // Get initial session first
-    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      if (!isMounted) return;
-      await syncSessionState(currentSession);
-    });
+    const syncSessionState = (nextSession: Session | null) => {
+      const currentVersion = ++requestVersion;
+
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (!nextSession?.user) {
+        setRoles([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      void fetchRoles(nextSession.user.id)
+        .then((nextRoles) => {
+          if (!isMounted || currentVersion !== requestVersion) return;
+          setRoles(nextRoles);
+        })
+        .catch((error) => {
+          console.error("Unable to load user roles", error);
+          if (!isMounted || currentVersion !== requestVersion) return;
+          setRoles([]);
+        })
+        .finally(() => {
+          if (!isMounted || currentVersion !== requestVersion) return;
+          setLoading(false);
+        });
+    };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, nextSession) => {
+      (_event, nextSession) => {
         if (!isMounted) return;
-        await syncSessionState(nextSession);
+        syncSessionState(nextSession);
       }
     );
 
+    void supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (!isMounted) return;
+      syncSessionState(currentSession);
+    });
+
     return () => {
       isMounted = false;
+      requestVersion += 1;
       subscription.unsubscribe();
     };
-  }, [syncSessionState]);
+  }, [fetchRoles]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -88,7 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
     setRoles([]);
+    setLoading(false);
   };
 
   const isAdmin = roles.some((r) => ["super_admin", "admin", "editor"].includes(r));

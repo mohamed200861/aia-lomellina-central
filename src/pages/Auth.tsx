@@ -20,7 +20,7 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [awaitingRedirect, setAwaitingRedirect] = useState(false);
-  const { signIn, signUp, user, loading: authLoading } = useAuth();
+  const { signIn, signUp, user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,12 +30,16 @@ export default function Auth() {
     return requested?.startsWith("/") ? requested : null;
   }, [location.search]);
 
+  const nextPath = useMemo(() => {
+    if (isAdmin) return "/admin";
+    return redirectPath && !redirectPath.startsWith("/admin") ? redirectPath : "/area-associati";
+  }, [isAdmin, redirectPath]);
+
   // If user is already logged in and not awaiting a form submission redirect
   useEffect(() => {
     if (authLoading || !user || awaitingRedirect) return;
-    // Members login always goes to members area
-    navigate(redirectPath || "/area-associati", { replace: true });
-  }, [authLoading, user, navigate, redirectPath, awaitingRedirect]);
+    navigate(nextPath, { replace: true });
+  }, [authLoading, user, navigate, nextPath, awaitingRedirect]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -47,9 +51,9 @@ export default function Auth() {
   useEffect(() => {
     if (!awaitingRedirect || authLoading || !user) return;
 
-    navigate(redirectPath || "/area-associati", { replace: true });
+    navigate(nextPath, { replace: true });
     setAwaitingRedirect(false);
-  }, [authLoading, awaitingRedirect, navigate, redirectPath, user]);
+  }, [authLoading, awaitingRedirect, navigate, nextPath, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

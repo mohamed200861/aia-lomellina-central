@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import heroImage from "@/assets/hero-referee.jpg";
 import { useEffect, useState, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 function AnimatedCounter({ end, suffix = "", duration = 2000 }: { end: number; suffix?: string; duration?: number }) {
   const [count, setCount] = useState(0);
@@ -48,6 +51,35 @@ const fadeUp = {
 };
 
 export default function Index() {
+  const { data: settings } = useSiteSettings();
+  const { data: latestNews = [] } = useQuery({
+    queryKey: ["public-news", "home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("news")
+        .select("id, title, published_at, category")
+        .eq("is_published", true)
+        .order("published_at", { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: upcomingEvents = [] } = useQuery({
+    queryKey: ["public-events", "home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, title, event_date, event_time, location")
+        .eq("is_published", true)
+        .order("event_date", { ascending: true })
+        .limit(4);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return (
     <Layout>
       {/* Hero */}
@@ -67,11 +99,11 @@ export default function Index() {
               Sezione AIA Lomellina
             </span>
             <h1 className="font-heading text-4xl md:text-6xl font-extrabold text-primary-foreground leading-tight mb-6">
-              Il Calcio ha bisogno di te.{" "}
+              {settings?.hero_title || "Il Calcio ha bisogno di te."}{" "}
               <span className="text-secondary">Diventa Arbitro.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 mb-8 max-w-lg">
-              Entra a far parte della famiglia arbitrale. Formazione, crescita personale e passione per lo sport più amato d'Italia.
+              {settings?.hero_subtitle || "Entra a far parte della famiglia arbitrale. Formazione, crescita personale e passione per lo sport più amato d'Italia."}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/diventa-arbitro">
@@ -206,7 +238,7 @@ export default function Index() {
                 <p>• Passione per il calcio e senso di giustizia</p>
               </div>
               <div className="mt-6 p-4 bg-accent rounded-lg">
-                <p className="text-sm font-medium text-accent-foreground">📅 Prossimo corso: <strong>Settembre 2026</strong></p>
+                <p className="text-sm font-medium text-accent-foreground">📅 Prossimo corso: <strong>{settings?.next_course_date || "Settembre 2026"}</strong></p>
                 <p className="text-xs text-muted-foreground mt-1">Le iscrizioni sono aperte tutto l'anno</p>
               </div>
             </motion.div>
@@ -227,13 +259,9 @@ export default function Index() {
             </Link>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { title: "Apertura Iscrizioni Corso Arbitri 2026", date: "20 Mar 2026", cat: "Corso" },
-              { title: "Riunione Tecnica Mensile — Aprile", date: "15 Mar 2026", cat: "Riunioni" },
-              { title: "Nuove Regole del Gioco: Aggiornamento IFAB", date: "10 Mar 2026", cat: "Regolamento" },
-            ].map((news, i) => (
+            {latestNews.map((news, i) => (
               <motion.div
-                key={i}
+                key={news.id}
                 custom={i}
                 variants={fadeUp}
                 initial="hidden"
@@ -246,8 +274,8 @@ export default function Index() {
                   </div>
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded-full">{news.cat}</span>
-                      <span className="text-xs text-muted-foreground">{news.date}</span>
+                      <span className="text-xs font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded-full">{news.category || "Generale"}</span>
+                      <span className="text-xs text-muted-foreground">{news.published_at ? new Date(news.published_at).toLocaleDateString("it-IT") : ""}</span>
                     </div>
                     <h3 className="font-heading font-bold text-base group-hover:text-primary transition-colors">{news.title}</h3>
                   </div>
@@ -255,6 +283,7 @@ export default function Index() {
               </motion.div>
             ))}
           </div>
+          {latestNews.length === 0 && <p className="text-center text-muted-foreground mt-6">Le news pubblicate appariranno qui automaticamente.</p>}
           <div className="text-center mt-6 sm:hidden">
             <Link to="/news">
               <Button variant="outline">Tutte le News</Button>
@@ -276,14 +305,9 @@ export default function Index() {
             </Link>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
-            {[
-              { title: "Riunione Tecnica Arbitri", date: "5 Aprile 2026", time: "20:30", location: "Sede AIA Vigevano" },
-              { title: "Corso di Aggiornamento Futsal", date: "12 Aprile 2026", time: "18:00", location: "Palazzetto dello Sport" },
-              { title: "Raduno Atletico Primaverile", date: "20 Aprile 2026", time: "09:00", location: "Campo Sportivo Comunale" },
-              { title: "Assemblea Ordinaria Sezionale", date: "3 Maggio 2026", time: "15:00", location: "Sede AIA Vigevano" },
-            ].map((event, i) => (
+            {upcomingEvents.map((event, i) => (
               <motion.div
-                key={i}
+                key={event.id}
                 custom={i}
                 variants={fadeUp}
                 initial="hidden"
@@ -292,8 +316,8 @@ export default function Index() {
                 className="flex bg-card rounded-xl border p-5 gap-4 hover:shadow-md transition-shadow"
               >
                 <div className="bg-primary text-primary-foreground rounded-lg p-3 text-center min-w-[65px] h-fit">
-                  <div className="text-2xl font-bold font-heading">{event.date.split(" ")[0]}</div>
-                  <div className="text-xs uppercase">{event.date.split(" ")[1]}</div>
+                  <div className="text-2xl font-bold font-heading">{new Date(event.event_date).getDate()}</div>
+                  <div className="text-xs uppercase">{new Date(event.event_date).toLocaleString("it-IT", { month: "short" })}</div>
                 </div>
                 <div>
                   <h3 className="font-heading font-bold text-base">{event.title}</h3>
@@ -302,6 +326,7 @@ export default function Index() {
               </motion.div>
             ))}
           </div>
+          {upcomingEvents.length === 0 && <p className="text-center text-muted-foreground mt-6">Gli eventi pubblicati appariranno qui automaticamente.</p>}
         </div>
       </section>
 
