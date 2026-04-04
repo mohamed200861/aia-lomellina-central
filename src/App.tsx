@@ -59,6 +59,7 @@ const AdminDocuments = lazy(() => import("./pages/admin/AdminDocuments"));
 const AdminCommunications = lazy(() => import("./pages/admin/AdminCommunications"));
 const AdminActivityLog = lazy(() => import("./pages/admin/AdminActivityLog"));
 const AdminEmailSettings = lazy(() => import("./pages/admin/AdminEmailSettings"));
+const AdminSocialFeed = lazy(() => import("./pages/admin/AdminSocialFeed"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
