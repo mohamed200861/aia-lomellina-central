@@ -6,16 +6,19 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import FileUpload from "@/components/admin/FileUpload";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Newspaper } from "lucide-react";
 
 export default function AdminPressReview() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const { user, loading: authLoading } = useAuth();
 
   const { data: articles, isLoading, error } = useQuery({
@@ -38,7 +41,12 @@ export default function AdminPressReview() {
         if (error) throw error;
       }
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-press-review"] }); toast.success("Salvato!"); setOpen(false); setEditing(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-press-review"] });
+      qc.invalidateQueries({ queryKey: ["press-review"] });
+      toast.success("Salvato!");
+      setOpen(false); setEditing(null); setThumbnailUrl("");
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -47,7 +55,11 @@ export default function AdminPressReview() {
       const { error } = await supabase.from("press_review").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-press-review"] }); toast.success("Eliminato!"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-press-review"] });
+      qc.invalidateQueries({ queryKey: ["press-review"] });
+      toast.success("Eliminato!");
+    },
   });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -60,10 +72,12 @@ export default function AdminPressReview() {
       newspaper: fd.get("newspaper") as string,
       page: (fd.get("page") as string) || null,
       external_url: (fd.get("external_url") as string) || null,
+      thumbnail_url: thumbnailUrl || null,
+      description: (fd.get("description") as string) || null,
     });
   };
 
-  const years = [...new Set(articles?.map((a) => a.year) || [])].sort((a, b) => b - a);
+  const years = [...new Set(articles?.map((a: any) => a.year) || [])].sort((a, b) => b - a);
 
   return (
     <AdminLayout>
@@ -72,46 +86,55 @@ export default function AdminPressReview() {
           <h1 className="text-2xl font-heading font-bold">Rassegna Stampa</h1>
           <p className="text-sm text-muted-foreground">{articles?.length ?? 0} articoli</p>
         </div>
-        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setEditing(null); }}>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditing(null); setThumbnailUrl(""); } }}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Aggiungi Articolo</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editing ? "Modifica Articolo" : "Nuovo Articolo"}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div><Label>Data Articolo</Label><Input name="article_date" type="date" required defaultValue={editing?.article_date || ""} /></div>
               <div><Label>Testata</Label><Input name="newspaper" required defaultValue={editing?.newspaper || ""} /></div>
               <div><Label>Pagina</Label><Input name="page" defaultValue={editing?.page || ""} placeholder="es. Pag. 40" /></div>
+              <div><Label>Descrizione</Label><Textarea name="description" rows={2} defaultValue={editing?.description || ""} placeholder="Breve descrizione dell'articolo" /></div>
               <div><Label>Link esterno</Label><Input name="external_url" type="url" defaultValue={editing?.external_url || ""} /></div>
+              <div>
+                <Label>Anteprima / Thumbnail</Label>
+                <FileUpload bucket="media" folder="press" accept="image/*" onUpload={setThumbnailUrl} currentUrl={editing?.thumbnail_url} label="Carica anteprima" />
+              </div>
               <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? "Salvataggio..." : "Salva"}</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {isLoading && (
-        <div className="space-y-3">
-          {[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-        </div>
-      )}
-
-      {error && <p className="text-destructive text-center py-8">Errore nel caricamento: {(error as Error).message}</p>}
+      {isLoading && <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full" />)}</div>}
+      {error && <p className="text-destructive text-center py-8">Errore: {(error as Error).message}</p>}
 
       {!isLoading && !error && years.map((year) => (
         <div key={year} className="mb-8">
           <h2 className="font-heading font-bold text-lg mb-3">{year}</h2>
           <div className="space-y-2">
-            {articles?.filter((a) => a.year === year).map((a) => (
+            {articles?.filter((a: any) => a.year === year).map((a: any) => (
               <Card key={a.id}>
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-sm font-medium">{new Date(a.article_date).toLocaleDateString("it-IT")}</span>
-                    <span className="mx-2">—</span>
-                    <span className="font-bold text-sm">{a.newspaper}</span>
-                    {a.page && <span className="text-sm text-muted-foreground ml-2">• {a.page}</span>}
+                <CardContent className="p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    {a.thumbnail_url ? (
+                      <img src={a.thumbnail_url} alt="" className="h-12 w-16 object-cover rounded shrink-0" />
+                    ) : (
+                      <div className="h-12 w-16 bg-muted rounded flex items-center justify-center shrink-0">
+                        <Newspaper className="h-5 w-5 text-muted-foreground/40" />
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-sm font-medium">{new Date(a.article_date).toLocaleDateString("it-IT")}</span>
+                      <span className="mx-2">—</span>
+                      <span className="font-bold text-sm">{a.newspaper}</span>
+                      {a.page && <span className="text-sm text-muted-foreground ml-2">• {a.page}</span>}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(a); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="icon" variant="ghost" onClick={() => { setEditing(a); setThumbnailUrl(a.thumbnail_url || ""); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm("Eliminare?")) deleteMutation.mutate(a.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </CardContent>
