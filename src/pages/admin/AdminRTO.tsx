@@ -26,7 +26,7 @@ export default function AdminRTO() {
       if (error) throw error;
       return data;
     },
-    enabled: !authLoading,
+    enabled: !authLoading && !!user,
   });
 
   const saveMutation = useMutation({

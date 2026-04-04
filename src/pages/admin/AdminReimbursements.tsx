@@ -24,7 +24,7 @@ export default function AdminReimbursements() {
       if (error) throw error;
       return data;
     },
-    enabled: !authLoading,
+    enabled: !authLoading && !!user,
   });
 
   const saveMutation = useMutation({

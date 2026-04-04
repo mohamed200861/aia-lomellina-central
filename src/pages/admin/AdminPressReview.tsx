@@ -25,7 +25,7 @@ export default function AdminPressReview() {
       if (error) throw error;
       return data;
     },
-    enabled: !authLoading,
+    enabled: !authLoading && !!user,
   });
 
   const saveMutation = useMutation({
