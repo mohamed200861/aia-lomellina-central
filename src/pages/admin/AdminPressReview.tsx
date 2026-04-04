@@ -16,7 +16,7 @@ export default function AdminPressReview() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: articles, isLoading, error } = useQuery({
     queryKey: ["admin-press-review"],

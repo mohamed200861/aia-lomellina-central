@@ -17,7 +17,7 @@ export default function AdminReports() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const qc = useQueryClient();
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: reports, isLoading, error } = useQuery({
     queryKey: ["admin-reports"],

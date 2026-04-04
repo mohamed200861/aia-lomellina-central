@@ -16,7 +16,7 @@ export default function AdminReferees() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: referees, isLoading, error } = useQuery({
     queryKey: ["admin-referees"],
