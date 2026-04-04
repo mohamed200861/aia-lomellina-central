@@ -449,34 +449,40 @@ export type Database = {
         Row: {
           article_date: string
           created_at: string
+          description: string | null
           external_url: string | null
           file_url: string | null
           id: string
           newspaper: string
           page: string | null
           sort_order: number | null
+          thumbnail_url: string | null
           year: number
         }
         Insert: {
           article_date: string
           created_at?: string
+          description?: string | null
           external_url?: string | null
           file_url?: string | null
           id?: string
           newspaper: string
           page?: string | null
           sort_order?: number | null
+          thumbnail_url?: string | null
           year: number
         }
         Update: {
           article_date?: string
           created_at?: string
+          description?: string | null
           external_url?: string | null
           file_url?: string | null
           id?: string
           newspaper?: string
           page?: string | null
           sort_order?: number | null
+          thumbnail_url?: string | null
           year?: number
         }
         Relationships: []
@@ -739,6 +745,42 @@ export type Database = {
           whatsapp?: string | null
           x_url?: string | null
           youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          external_url: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean | null
+          platform: string
+          post_date: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          platform?: string
+          post_date?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean | null
+          platform?: string
+          post_date?: string | null
+          sort_order?: number | null
         }
         Relationships: []
       }

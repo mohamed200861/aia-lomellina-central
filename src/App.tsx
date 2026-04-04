@@ -59,6 +59,7 @@ const AdminDocuments = lazy(() => import("./pages/admin/AdminDocuments"));
 const AdminCommunications = lazy(() => import("./pages/admin/AdminCommunications"));
 const AdminActivityLog = lazy(() => import("./pages/admin/AdminActivityLog"));
 const AdminEmailSettings = lazy(() => import("./pages/admin/AdminEmailSettings"));
+const AdminSocialFeed = lazy(() => import("./pages/admin/AdminSocialFeed"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -138,6 +139,7 @@ const App = () => (
                 <Route path="/admin/documents" element={<ProtectedRoute requireAdmin><AdminDocuments /></ProtectedRoute>} />
                 <Route path="/admin/communications" element={<ProtectedRoute requireAdmin><AdminCommunications /></ProtectedRoute>} />
                 <Route path="/admin/press-review" element={<ProtectedRoute requireAdmin><AdminPressReview /></ProtectedRoute>} />
+                <Route path="/admin/social-feed" element={<ProtectedRoute requireAdmin><AdminSocialFeed /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute requireSuperAdmin><AdminUsers /></ProtectedRoute>} />
                 <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
                 <Route path="/admin/email-settings" element={<ProtectedRoute requireSuperAdmin><AdminEmailSettings /></ProtectedRoute>} />

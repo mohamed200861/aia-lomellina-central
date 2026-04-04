@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users, Calendar, Newspaper, BookOpen, Award, PhoneCall,
-  ChevronRight, TrendingUp, Play, ArrowRight
+  ChevronRight, TrendingUp, ArrowRight, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
@@ -50,14 +50,22 @@ const fadeUp = {
   }),
 };
 
+const PLATFORM_ICONS: Record<string, string> = {
+  facebook: "📘",
+  instagram: "📸",
+  twitter: "🐦",
+  telegram: "✈️",
+};
+
 export default function Index() {
   const { data: settings } = useSiteSettings();
+
   const { data: latestNews = [] } = useQuery({
     queryKey: ["public-news", "home"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("news")
-        .select("id, title, published_at, category")
+        .select("id, title, published_at, category, featured_image, excerpt")
         .eq("is_published", true)
         .order("published_at", { ascending: false })
         .limit(3);
@@ -80,6 +88,20 @@ export default function Index() {
     },
   });
 
+  const { data: socialPosts = [] } = useQuery({
+    queryKey: ["public-social-feed"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("social_posts")
+        .select("*")
+        .eq("is_published", true)
+        .order("post_date", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   return (
     <Layout>
       {/* Hero */}
@@ -89,12 +111,7 @@ export default function Index() {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-transparent" />
         </div>
         <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-2xl"
-          >
+          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-2xl">
             <span className="inline-block px-4 py-1.5 bg-secondary/90 text-secondary-foreground rounded-full text-sm font-semibold mb-6">
               Sezione AIA Lomellina
             </span>
@@ -103,7 +120,7 @@ export default function Index() {
               <span className="text-secondary">Diventa Arbitro.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 mb-8 max-w-lg">
-              {settings?.hero_subtitle || "Entra a far parte della famiglia arbitrale. Formazione, crescita personale e passione per lo sport più amato d'Italia."}
+              {settings?.hero_subtitle || "Entra a far parte della famiglia arbitrale."}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/diventa-arbitro">
@@ -137,18 +154,8 @@ export default function Index() {
               { icon: Award, title: "Area Associati", desc: "Servizi riservati agli associati", path: "/area-associati", color: "bg-pitch" },
               { icon: PhoneCall, title: "Contatti", desc: "Scrivici o vieni a trovarci", path: "/contatti", color: "bg-secondary" },
             ].map((card, i) => (
-              <motion.div
-                key={card.path}
-                custom={i}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-              >
-                <Link
-                  to={card.path}
-                  className="group block bg-card rounded-xl border shadow-sm hover:shadow-lg transition-all duration-300 p-6"
-                >
+              <motion.div key={card.path} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                <Link to={card.path} className="group block bg-card rounded-xl border shadow-sm hover:shadow-lg transition-all duration-300 p-6">
                   <div className={`${card.color} text-primary-foreground w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                     <card.icon className="h-6 w-6" />
                   </div>
@@ -172,13 +179,7 @@ export default function Index() {
               { value: 1200, suffix: "+", label: "Gare Arbitrate / Anno" },
               { value: 30, suffix: "+", label: "Nuovi Arbitri / Anno" },
             ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-              >
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}>
                 <div className="text-4xl md:text-5xl font-heading font-extrabold text-secondary mb-2">
                   <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                 </div>
@@ -193,25 +194,13 @@ export default function Index() {
       <section className="section-padding bg-muted">
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="inline-block px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-xs font-semibold mb-4">
-                CORSO ARBITRI
-              </span>
+            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+              <span className="inline-block px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-xs font-semibold mb-4">CORSO ARBITRI</span>
               <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
                 Perché diventare <span className="text-primary">Arbitro?</span>
               </h2>
               <ul className="space-y-4 mb-8">
-                {[
-                  "Formazione gratuita e supporto costante",
-                  "Crescita personale e capacità decisionale",
-                  "Appartenenza a una grande famiglia sportiva",
-                  "Possibilità di carriera fino alla Serie A",
-                  "Rimborsi spese per ogni gara arbitrata",
-                ].map((item) => (
+                {["Formazione gratuita e supporto costante", "Crescita personale e capacità decisionale", "Appartenenza a una grande famiglia sportiva", "Possibilità di carriera fino alla Serie A", "Rimborsi spese per ogni gara arbitrata"].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                     <span className="text-foreground/80">{item}</span>
@@ -224,12 +213,7 @@ export default function Index() {
                 </Button>
               </Link>
             </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="bg-card rounded-2xl p-8 border shadow-lg"
-            >
+            <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-card rounded-2xl p-8 border shadow-lg">
               <h3 className="font-heading font-bold text-xl mb-4">Requisiti</h3>
               <div className="space-y-3 text-sm text-foreground/80">
                 <p>• Età compresa tra 14 e 40 anni</p>
@@ -260,34 +244,30 @@ export default function Index() {
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {latestNews.map((news, i) => (
-              <motion.div
-                key={news.id}
-                custom={i}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-              >
-                <div className="bg-card rounded-xl border overflow-hidden hover:shadow-lg transition-shadow group">
-                  <div className="h-40 bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center">
-                    <Newspaper className="h-12 w-12 text-primary/40" />
-                  </div>
+              <motion.div key={news.id} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                <Link to="/news" className="block bg-card rounded-xl border overflow-hidden hover:shadow-lg transition-shadow group">
+                  {news.featured_image ? (
+                    <img src={news.featured_image} alt={news.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                  ) : (
+                    <div className="h-48 bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center">
+                      <Newspaper className="h-12 w-12 text-primary/40" />
+                    </div>
+                  )}
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded-full">{news.category || "Generale"}</span>
                       <span className="text-xs text-muted-foreground">{news.published_at ? new Date(news.published_at).toLocaleDateString("it-IT") : ""}</span>
                     </div>
-                    <h3 className="font-heading font-bold text-base group-hover:text-primary transition-colors">{news.title}</h3>
+                    <h3 className="font-heading font-bold text-base group-hover:text-primary transition-colors line-clamp-2">{news.title}</h3>
+                    {news.excerpt && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{news.excerpt}</p>}
                   </div>
-                </div>
+                </Link>
               </motion.div>
             ))}
           </div>
           {latestNews.length === 0 && <p className="text-center text-muted-foreground mt-6">Le news pubblicate appariranno qui automaticamente.</p>}
           <div className="text-center mt-6 sm:hidden">
-            <Link to="/news">
-              <Button variant="outline">Tutte le News</Button>
-            </Link>
+            <Link to="/news"><Button variant="outline">Tutte le News</Button></Link>
           </div>
         </div>
       </section>
@@ -306,15 +286,8 @@ export default function Index() {
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {upcomingEvents.map((event, i) => (
-              <motion.div
-                key={event.id}
-                custom={i}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                className="flex bg-card rounded-xl border p-5 gap-4 hover:shadow-md transition-shadow"
-              >
+              <motion.div key={event.id} custom={i} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+                className="flex bg-card rounded-xl border p-5 gap-4 hover:shadow-md transition-shadow">
                 <div className="bg-primary text-primary-foreground rounded-lg p-3 text-center min-w-[65px] h-fit">
                   <div className="text-2xl font-bold font-heading">{new Date(event.event_date).getDate()}</div>
                   <div className="text-xs uppercase">{new Date(event.event_date).toLocaleString("it-IT", { month: "short" })}</div>
@@ -330,62 +303,82 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Media */}
+      {/* Social Feed */}
       <section className="section-padding bg-background">
         <div className="container mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold">Media</h2>
-            <p className="text-muted-foreground mt-1">Foto e video dalla nostra sezione</p>
-          </div>
-          <div className="aspect-video max-w-3xl mx-auto rounded-2xl overflow-hidden border shadow-lg bg-primary/5 flex items-center justify-center">
-            <iframe
-              width="100%"
-              height="100%"
-              src="https://www.youtube.com/embed?listType=user_uploads&list=AiaLomellina"
-              title="AIA Lomellina YouTube"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              loading="lazy"
-              className="w-full h-full"
-            />
-          </div>
-          <div className="text-center mt-6">
-            <Link to="/media">
-              <Button variant="outline">Galleria Completa <ChevronRight className="ml-1 h-4 w-4" /></Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Feed */}
-      <section className="section-padding bg-muted">
-        <div className="container mx-auto">
-          <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-heading font-bold">Seguici sui Social</h2>
-            <p className="text-muted-foreground mt-1">Resta connesso con la sezione</p>
+            <p className="text-muted-foreground mt-1">Le ultime dalla nostra community</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="bg-card rounded-xl border p-6 text-center">
-              <div className="text-3xl mb-3">📸</div>
-              <h3 className="font-heading font-bold text-lg mb-2">Instagram</h3>
-              <p className="text-sm text-muted-foreground mb-4">Segui @aialomellina per foto e storie dal campo</p>
-              <a href="https://www.instagram.com/aialomellina/" target="_blank" rel="noopener noreferrer">
-                <Button className="bg-gradient-to-r from-[hsl(280,60%,50%)] to-[hsl(340,70%,55%)] text-primary-foreground border-0 hover:opacity-90">
-                  Seguici su Instagram
-                </Button>
-              </a>
+
+          {socialPosts.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
+              {socialPosts.map((post, i) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="bg-card rounded-xl border overflow-hidden hover:shadow-lg transition-shadow group"
+                >
+                  {post.image_url ? (
+                    <img src={post.image_url} alt="" className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-52 bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center text-4xl">
+                      {PLATFORM_ICONS[post.platform] || "📱"}
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold uppercase text-primary">{post.platform}</span>
+                      {post.post_date && <span className="text-xs text-muted-foreground">{new Date(post.post_date).toLocaleDateString("it-IT")}</span>}
+                    </div>
+                    {post.caption && <p className="text-sm text-foreground line-clamp-3">{post.caption}</p>}
+                    {post.external_url && (
+                      <a href={post.external_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary text-xs font-medium mt-2 hover:underline">
+                        Vai al post <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
             </div>
-            <div className="bg-card rounded-xl border p-6 text-center">
-              <div className="text-3xl mb-3">✈️</div>
-              <h3 className="font-heading font-bold text-lg mb-2">Telegram</h3>
-              <p className="text-sm text-muted-foreground mb-4">Unisciti al nostro canale per aggiornamenti in tempo reale</p>
-              <a href="https://t.me/aialomellina" target="_blank" rel="noopener noreferrer">
-                <Button className="bg-[hsl(200,80%,50%)] text-primary-foreground border-0 hover:opacity-90">
-                  Unisciti al Canale
-                </Button>
-              </a>
+          ) : (
+            /* Fallback: static social links */
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-10">
+              <div className="bg-card rounded-xl border p-6 text-center">
+                <div className="text-3xl mb-3">📸</div>
+                <h3 className="font-heading font-bold text-lg mb-2">Instagram</h3>
+                <p className="text-sm text-muted-foreground mb-4">Segui @aialomellina per foto e storie dal campo</p>
+                <a href={settings?.instagram_url || "https://www.instagram.com/aialomellina/"} target="_blank" rel="noopener noreferrer">
+                  <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:opacity-90">Seguici su Instagram</Button>
+                </a>
+              </div>
+              <div className="bg-card rounded-xl border p-6 text-center">
+                <div className="text-3xl mb-3">📘</div>
+                <h3 className="font-heading font-bold text-lg mb-2">Facebook</h3>
+                <p className="text-sm text-muted-foreground mb-4">La nostra pagina ufficiale con notizie e aggiornamenti</p>
+                <a href={settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina"} target="_blank" rel="noopener noreferrer">
+                  <Button className="bg-[hsl(220,60%,50%)] text-white border-0 hover:opacity-90">Seguici su Facebook</Button>
+                </a>
+              </div>
             </div>
+          )}
+
+          {/* Social links bar */}
+          <div className="flex justify-center gap-4 flex-wrap">
+            {[
+              { label: "Facebook", url: settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina", emoji: "📘" },
+              { label: "Instagram", url: settings?.instagram_url || "https://www.instagram.com/aialomellina/", emoji: "📸" },
+              { label: "YouTube", url: settings?.youtube_url || "https://www.youtube.com/AiaLomellina", emoji: "▶️" },
+              { label: "Telegram", url: settings?.telegram_url || "https://t.me/aialomellina", emoji: "✈️" },
+            ].map((s) => (
+              <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full text-sm font-medium text-foreground hover:bg-accent transition-colors">
+                <span>{s.emoji}</span> {s.label}
+              </a>
+            ))}
           </div>
         </div>
       </section>

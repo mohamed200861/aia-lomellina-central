@@ -13,6 +13,7 @@ const TABLE_QUERY_MAP: Record<string, string[]> = {
   referees: ["admin-referees", "referees-list", "admin-referees-count"],
   media: ["admin-media", "public-media"],
   press_review: ["admin-press-review", "press-review"],
+  social_posts: ["admin-social-feed", "public-social-feed"],
   rto_dates: ["admin-rto", "member-rto", "rto-for-justify"],
   reimbursement_rules: ["admin-reimbursements", "member-reimbursements"],
   report_settings: ["admin-reports", "member-reports"],
