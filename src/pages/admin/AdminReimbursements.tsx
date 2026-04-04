@@ -15,7 +15,7 @@ export default function AdminReimbursements() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const qc = useQueryClient();
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: rules, isLoading, error } = useQuery({
     queryKey: ["admin-reimbursements"],
@@ -24,7 +24,7 @@ export default function AdminReimbursements() {
       if (error) throw error;
       return data;
     },
-    enabled: !authLoading,
+    enabled: !authLoading && !!user,
   });
 
   const saveMutation = useMutation({

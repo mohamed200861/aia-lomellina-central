@@ -17,7 +17,7 @@ export default function AdminRTO() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const qc = useQueryClient();
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: rtos, isLoading, error } = useQuery({
     queryKey: ["admin-rto"],
@@ -26,7 +26,7 @@ export default function AdminRTO() {
       if (error) throw error;
       return data;
     },
-    enabled: !authLoading,
+    enabled: !authLoading && !!user,
   });
 
   const saveMutation = useMutation({

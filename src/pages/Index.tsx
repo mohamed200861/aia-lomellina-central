@@ -321,7 +321,7 @@ export default function Index() {
                 </div>
                 <div>
                   <h3 className="font-heading font-bold text-base">{event.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">🕐 {event.time} — 📍 {event.location}</p>
+                  <p className="text-sm text-muted-foreground mt-1">🕐 {event.event_time || "—"} — 📍 {event.location || "—"}</p>
                 </div>
               </motion.div>
             ))}

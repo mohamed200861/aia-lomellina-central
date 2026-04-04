@@ -19,7 +19,7 @@ export default function AdminAthletic() {
   const [editing, setEditing] = useState<any>(null);
   const [fileUrl, setFileUrl] = useState("");
   const qc = useQueryClient();
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: content, isLoading, error } = useQuery({
     queryKey: ["admin-athletic"],
@@ -28,7 +28,7 @@ export default function AdminAthletic() {
       if (error) throw error;
       return data;
     },
-    enabled: !authLoading,
+    enabled: !authLoading && !!user,
   });
 
   const saveMutation = useMutation({

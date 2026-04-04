@@ -17,7 +17,7 @@ export default function AdminMedical() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const qc = useQueryClient();
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const { data: centers, isLoading, error } = useQuery({
     queryKey: ["admin-medical"],
@@ -26,7 +26,7 @@ export default function AdminMedical() {
       if (error) throw error;
       return data;
     },
-    enabled: !authLoading,
+    enabled: !authLoading && !!user,
   });
 
   const saveMutation = useMutation({
