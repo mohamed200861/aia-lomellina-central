@@ -139,6 +139,7 @@ const App = () => (
                 <Route path="/admin/documents" element={<ProtectedRoute requireAdmin><AdminDocuments /></ProtectedRoute>} />
                 <Route path="/admin/communications" element={<ProtectedRoute requireAdmin><AdminCommunications /></ProtectedRoute>} />
                 <Route path="/admin/press-review" element={<ProtectedRoute requireAdmin><AdminPressReview /></ProtectedRoute>} />
+                <Route path="/admin/social-feed" element={<ProtectedRoute requireAdmin><AdminSocialFeed /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute requireSuperAdmin><AdminUsers /></ProtectedRoute>} />
                 <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
                 <Route path="/admin/email-settings" element={<ProtectedRoute requireSuperAdmin><AdminEmailSettings /></ProtectedRoute>} />

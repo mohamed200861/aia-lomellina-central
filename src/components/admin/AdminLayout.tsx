@@ -32,6 +32,7 @@ const navGroups: NavGroup[] = [
       { path: "/admin/events", label: "Eventi", icon: Calendar },
       { path: "/admin/media", label: "Media", icon: Image },
       { path: "/admin/press-review", label: "Rassegna Stampa", icon: BookMarked },
+      { path: "/admin/social-feed", label: "Social Feed", icon: Heart },
     ],
   },
   {
