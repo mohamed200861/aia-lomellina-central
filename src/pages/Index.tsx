@@ -2,12 +2,13 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users, Calendar, Newspaper, BookOpen, Award, PhoneCall,
-  ChevronRight, TrendingUp, ArrowRight, ExternalLink
+  ChevronRight, TrendingUp, ArrowRight, ExternalLink, ChevronLeft,
+  Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import heroImage from "@/assets/hero-referee.jpg";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -57,6 +58,265 @@ const PLATFORM_ICONS: Record<string, string> = {
   telegram: "✈️",
 };
 
+function MediaCarousel() {
+  const { data: media = [] } = useQuery({
+    queryKey: ["public-media", "homepage"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("media")
+        .select("*")
+        .in("media_type", ["image", "video"])
+        .order("sort_order")
+        .order("created_at", { ascending: false })
+        .limit(12);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    el?.addEventListener("scroll", checkScroll, { passive: true });
+    return () => el?.removeEventListener("scroll", checkScroll);
+  }, [checkScroll, media]);
+
+  const scroll = (dir: "left" | "right") => {
+    scrollRef.current?.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
+  };
+
+  if (media.length === 0) return null;
+
+  return (
+    <section className="section-padding bg-muted">
+      <div className="container mx-auto">
+        <div className="flex justify-between items-end mb-8">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold">Galleria Media</h2>
+            <p className="text-muted-foreground mt-1">Foto e video dalla nostra sezione</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => scroll("left")}
+              disabled={!canScrollLeft}
+              className="p-2 rounded-full bg-card border shadow-sm hover:shadow-md transition-all disabled:opacity-30"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => scroll("right")}
+              disabled={!canScrollRight}
+              className="p-2 rounded-full bg-card border shadow-sm hover:shadow-md transition-all disabled:opacity-30"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+            <Link to="/media" className="hidden sm:flex items-center gap-1 text-primary font-medium text-sm hover:underline ml-2">
+              Vedi tutto <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {media.map((m) => (
+            <Link
+              key={m.id}
+              to="/media"
+              className="snap-start shrink-0 w-72 md:w-80 group"
+            >
+              <div className="relative aspect-[4/3] rounded-xl overflow-hidden border shadow-sm group-hover:shadow-lg transition-shadow">
+                {m.media_type === "image" ? (
+                  <img src={m.file_url} alt={m.title || ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                ) : (
+                  <video src={m.file_url} className="w-full h-full object-cover" preload="metadata" muted />
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">
+                  {m.title && <p className="text-white text-sm font-medium truncate">{m.title}</p>}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <div className="text-center mt-4 sm:hidden">
+          <Link to="/media"><Button variant="outline" size="sm">Esplora la Galleria</Button></Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SocialFeedSection() {
+  const { data: settings } = useSiteSettings();
+  const { data: socialPosts = [] } = useQuery({
+    queryKey: ["public-social-feed"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("social_posts")
+        .select("*")
+        .eq("is_published", true)
+        .order("post_date", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  return (
+    <section className="section-padding bg-background">
+      <div className="container mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold">Seguici sui Social</h2>
+          <p className="text-muted-foreground mt-1">Le ultime dalla nostra community</p>
+        </div>
+
+        {socialPosts.length > 0 ? (
+          <div className="max-w-3xl mx-auto mb-10">
+            {/* Facebook-style feed container */}
+            <div className="bg-card border rounded-2xl shadow-lg overflow-hidden">
+              {/* Feed header */}
+              <div className="flex items-center gap-3 p-4 border-b bg-muted/30">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
+                  AIA
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">AIA Sezione Lomellina</h3>
+                  <p className="text-xs text-muted-foreground">Pagina ufficiale</p>
+                </div>
+              </div>
+
+              {/* Posts feed */}
+              <div className="divide-y">
+                {socialPosts.map((post, i) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.06 }}
+                    className="group"
+                  >
+                    {/* Post header */}
+                    <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">
+                        {PLATFORM_ICONS[post.platform] || "📱"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold">AIA Lomellina</p>
+                        <p className="text-xs text-muted-foreground">
+                          {post.post_date
+                            ? new Date(post.post_date).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })
+                            : ""}
+                          {" · "}
+                          <span className="capitalize">{post.platform}</span>
+                        </p>
+                      </div>
+                      {post.external_url && (
+                        <a
+                          href={post.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 transition-colors"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Caption */}
+                    {post.caption && (
+                      <div className="px-4 pb-2">
+                        <p className="text-sm text-foreground whitespace-pre-line">{post.caption}</p>
+                      </div>
+                    )}
+
+                    {/* Image */}
+                    {post.image_url && (
+                      <div className="relative">
+                        <img
+                          src={post.image_url}
+                          alt=""
+                          className="w-full max-h-[400px] object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    {/* Post footer */}
+                    <div className="px-4 py-3 flex items-center justify-between">
+                      {post.external_url ? (
+                        <a
+                          href={post.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary text-xs font-medium hover:underline inline-flex items-center gap-1"
+                        >
+                          Vedi il post originale <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <span />
+                      )}
+                      <span className="text-xs text-muted-foreground capitalize">{post.platform}</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Fallback: static social links */
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-10">
+            <div className="bg-card rounded-xl border p-6 text-center">
+              <div className="text-3xl mb-3">📸</div>
+              <h3 className="font-heading font-bold text-lg mb-2">Instagram</h3>
+              <p className="text-sm text-muted-foreground mb-4">Segui @aialomellina per foto e storie dal campo</p>
+              <a href={settings?.instagram_url || "https://www.instagram.com/aialomellina/"} target="_blank" rel="noopener noreferrer">
+                <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:opacity-90">Seguici su Instagram</Button>
+              </a>
+            </div>
+            <div className="bg-card rounded-xl border p-6 text-center">
+              <div className="text-3xl mb-3">📘</div>
+              <h3 className="font-heading font-bold text-lg mb-2">Facebook</h3>
+              <p className="text-sm text-muted-foreground mb-4">La nostra pagina ufficiale con notizie e aggiornamenti</p>
+              <a href={settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina"} target="_blank" rel="noopener noreferrer">
+                <Button className="bg-[hsl(220,60%,50%)] text-white border-0 hover:opacity-90">Seguici su Facebook</Button>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Social links bar */}
+        <div className="flex justify-center gap-4 flex-wrap">
+          {[
+            { label: "Facebook", url: settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina", emoji: "📘" },
+            { label: "Instagram", url: settings?.instagram_url || "https://www.instagram.com/aialomellina/", emoji: "📸" },
+            { label: "YouTube", url: settings?.youtube_url || "https://www.youtube.com/AiaLomellina", emoji: "▶️" },
+            { label: "Telegram", url: settings?.telegram_url || "https://t.me/aialomellina", emoji: "✈️" },
+          ].map((s) => (
+            <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full text-sm font-medium text-foreground hover:bg-accent transition-colors">
+              <span>{s.emoji}</span> {s.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Index() {
   const { data: settings } = useSiteSettings();
 
@@ -83,20 +343,6 @@ export default function Index() {
         .eq("is_published", true)
         .order("event_date", { ascending: true })
         .limit(4);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const { data: socialPosts = [] } = useQuery({
-    queryKey: ["public-social-feed"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("social_posts")
-        .select("*")
-        .eq("is_published", true)
-        .order("post_date", { ascending: false })
-        .limit(6);
       if (error) throw error;
       return data ?? [];
     },
@@ -303,85 +549,11 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Media Carousel */}
+      <MediaCarousel />
+
       {/* Social Feed */}
-      <section className="section-padding bg-background">
-        <div className="container mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold">Seguici sui Social</h2>
-            <p className="text-muted-foreground mt-1">Le ultime dalla nostra community</p>
-          </div>
-
-          {socialPosts.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
-              {socialPosts.map((post, i) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="bg-card rounded-xl border overflow-hidden hover:shadow-lg transition-shadow group"
-                >
-                  {post.image_url ? (
-                    <img src={post.image_url} alt="" className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-52 bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center text-4xl">
-                      {PLATFORM_ICONS[post.platform] || "📱"}
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold uppercase text-primary">{post.platform}</span>
-                      {post.post_date && <span className="text-xs text-muted-foreground">{new Date(post.post_date).toLocaleDateString("it-IT")}</span>}
-                    </div>
-                    {post.caption && <p className="text-sm text-foreground line-clamp-3">{post.caption}</p>}
-                    {post.external_url && (
-                      <a href={post.external_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary text-xs font-medium mt-2 hover:underline">
-                        Vai al post <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            /* Fallback: static social links */
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-10">
-              <div className="bg-card rounded-xl border p-6 text-center">
-                <div className="text-3xl mb-3">📸</div>
-                <h3 className="font-heading font-bold text-lg mb-2">Instagram</h3>
-                <p className="text-sm text-muted-foreground mb-4">Segui @aialomellina per foto e storie dal campo</p>
-                <a href={settings?.instagram_url || "https://www.instagram.com/aialomellina/"} target="_blank" rel="noopener noreferrer">
-                  <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:opacity-90">Seguici su Instagram</Button>
-                </a>
-              </div>
-              <div className="bg-card rounded-xl border p-6 text-center">
-                <div className="text-3xl mb-3">📘</div>
-                <h3 className="font-heading font-bold text-lg mb-2">Facebook</h3>
-                <p className="text-sm text-muted-foreground mb-4">La nostra pagina ufficiale con notizie e aggiornamenti</p>
-                <a href={settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina"} target="_blank" rel="noopener noreferrer">
-                  <Button className="bg-[hsl(220,60%,50%)] text-white border-0 hover:opacity-90">Seguici su Facebook</Button>
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* Social links bar */}
-          <div className="flex justify-center gap-4 flex-wrap">
-            {[
-              { label: "Facebook", url: settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina", emoji: "📘" },
-              { label: "Instagram", url: settings?.instagram_url || "https://www.instagram.com/aialomellina/", emoji: "📸" },
-              { label: "YouTube", url: settings?.youtube_url || "https://www.youtube.com/AiaLomellina", emoji: "▶️" },
-              { label: "Telegram", url: settings?.telegram_url || "https://t.me/aialomellina", emoji: "✈️" },
-            ].map((s) => (
-              <a key={s.label} href={s.url} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-full text-sm font-medium text-foreground hover:bg-accent transition-colors">
-                <span>{s.emoji}</span> {s.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      <SocialFeedSection />
     </Layout>
   );
 }

@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -11,12 +11,19 @@ import {
 import { Button } from "@/components/ui/button";
 import aiaLogo from "@/assets/aia-logo.webp";
 
-interface NavGroup {
+interface NavItem {
+  path: string;
   label: string;
-  items: { path: string; label: string; icon: any }[];
+  icon: any;
+  requireSuperAdmin?: boolean;
 }
 
-const navGroups: NavGroup[] = [
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const allNavGroups: NavGroup[] = [
   {
     label: "Generale",
     items: [
@@ -65,8 +72,8 @@ const navGroups: NavGroup[] = [
   {
     label: "Sistema",
     items: [
-      { path: "/admin/users", label: "Utenti & Ruoli", icon: Shield },
-      { path: "/admin/email-settings", label: "Email Settings", icon: Mail },
+      { path: "/admin/users", label: "Utenti & Ruoli", icon: Shield, requireSuperAdmin: true },
+      { path: "/admin/email-settings", label: "Email Settings", icon: Mail, requireSuperAdmin: true },
     ],
   },
 ];
@@ -78,12 +85,41 @@ const ROLE_DISPLAY: Record<string, string> = {
   member: "Membro",
 };
 
+// Editor can only access these paths
+const EDITOR_ALLOWED = new Set([
+  "/admin",
+  "/admin/news",
+  "/admin/events",
+  "/admin/media",
+  "/admin/press-review",
+  "/admin/social-feed",
+  "/admin/staff",
+  "/admin/referees",
+]);
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const location = useLocation();
-  const { signOut, user, roles } = useAuth();
+  const { signOut, user, roles, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
+
+  const primaryRole = roles[0] || "member";
+  const isEditor = primaryRole === "editor";
+
+  // Filter nav groups based on role
+  const visibleGroups = useMemo(() => {
+    return allNavGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => {
+          if (item.requireSuperAdmin && !isSuperAdmin) return false;
+          if (isEditor && !EDITOR_ALLOWED.has(item.path)) return false;
+          return true;
+        }),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [isSuperAdmin, isEditor]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -111,9 +147,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-4">
-          {navGroups.map((group) => {
+          {visibleGroups.map((group) => {
             const isCollapsed = collapsedGroups[group.label];
-            const hasActive = group.items.some((i) => location.pathname === i.path);
             return (
               <div key={group.label}>
                 <button
