@@ -843,6 +843,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_site_settings: {
+        Args: never
+        Returns: {
+          address: string
+          email: string
+          facebook_url: string
+          footer_text: string
+          hero_subtitle: string
+          hero_title: string
+          id: string
+          instagram_url: string
+          logo_url: string
+          next_course_date: string
+          phone1: string
+          phone2: string
+          site_name: string
+          telegram_url: string
+          updated_at: string
+          whatsapp: string
+          x_url: string
+          youtube_url: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
