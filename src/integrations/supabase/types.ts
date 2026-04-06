@@ -840,9 +840,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_site_settings: {
+        Row: {
+          address: string | null
+          email: string | null
+          facebook_url: string | null
+          footer_text: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string | null
+          instagram_url: string | null
+          logo_url: string | null
+          next_course_date: string | null
+          phone1: string | null
+          phone2: string | null
+          site_name: string | null
+          telegram_url: string | null
+          updated_at: string | null
+          whatsapp: string | null
+          x_url: string | null
+          youtube_url: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_public_site_settings: {
+        Args: never
+        Returns: {
+          address: string | null
+          email: string | null
+          facebook_url: string | null
+          footer_text: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string | null
+          instagram_url: string | null
+          logo_url: string | null
+          next_course_date: string | null
+          phone1: string | null
+          phone2: string | null
+          site_name: string | null
+          telegram_url: string | null
+          updated_at: string | null
+          whatsapp: string | null
+          x_url: string | null
+          youtube_url: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "public_site_settings"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
