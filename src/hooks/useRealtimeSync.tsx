@@ -26,6 +26,7 @@ const TABLE_QUERY_MAP: Record<string, string[]> = {
   absence_justifications: ["admin-justifications", "admin-just-count"],
   site_settings: ["site-settings", "email-settings-site"],
   email_templates: ["email-settings-templates"],
+  homepage_counters: ["admin-counters", "homepage-counters"],
   user_roles: ["admin-users", "admin-users-count"],
 };
 

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Facebook, Instagram, Youtube, Send, MessageCircle } from "lucide-react";
 import aiaLogo from "@/assets/aia-logo.webp";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
@@ -9,6 +10,25 @@ const XIcon = () => (
 );
 
 export default function Footer() {
+  const { data: settings } = useSiteSettings();
+
+  const address = settings?.address || "Via Don A. Ceriotti 19, 27029 Vigevano (PV), Italy";
+  const phone1 = settings?.phone1 || "+39 0381 327014";
+  const phone2 = settings?.phone2 || "+39 373 7832227";
+  const email = settings?.email || "lomellina@aia-figc.it";
+  const whatsapp = settings?.whatsapp || "+39 373 7832227";
+  const footerText = settings?.footer_text || "Associazione Italiana Arbitri — Sezione di Lomellina. Formazione, passione e fair play dal cuore della Lombardia.";
+
+  const socialLinks = [
+    { icon: Facebook, href: settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina" },
+    { icon: XIcon, href: settings?.x_url || "https://x.com/aialomellina" },
+    { icon: Instagram, href: settings?.instagram_url || "https://www.instagram.com/aialomellina/" },
+    { icon: Youtube, href: settings?.youtube_url || "https://www.youtube.com/AiaLomellina" },
+    { icon: Send, href: settings?.telegram_url || "https://t.me/aialomellina" },
+  ];
+
+  const whatsappLink = `https://wa.me/${whatsapp.replace(/[^0-9]/g, "")}`;
+
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="container mx-auto px-4 py-16">
@@ -18,13 +38,11 @@ export default function Footer() {
             <Link to="/" className="flex items-center gap-3 mb-4">
               <img src={aiaLogo} alt="AIA Lomellina" className="h-14 w-14 object-contain" />
               <div>
-                <span className="font-heading font-bold text-lg block">AIA Lomellina</span>
+                <span className="font-heading font-bold text-lg block">{settings?.site_name || "AIA Lomellina"}</span>
                 <span className="text-primary-foreground/70 text-xs">Sezione Arbitri di Calcio</span>
               </div>
             </Link>
-            <p className="text-sm text-primary-foreground/70 leading-relaxed">
-              Associazione Italiana Arbitri — Sezione di Lomellina. Formazione, passione e fair play dal cuore della Lombardia.
-            </p>
+            <p className="text-sm text-primary-foreground/70 leading-relaxed">{footerText}</p>
           </div>
 
           {/* Links */}
@@ -41,9 +59,7 @@ export default function Footer() {
                 { l: "Contatti", p: "/contatti" },
               ].map((x) => (
                 <li key={x.p}>
-                  <Link to={x.p} className="text-primary-foreground/70 hover:text-secondary transition-colors">
-                    {x.l}
-                  </Link>
+                  <Link to={x.p} className="text-primary-foreground/70 hover:text-secondary transition-colors">{x.l}</Link>
                 </li>
               ))}
             </ul>
@@ -55,20 +71,18 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 mt-0.5 text-secondary shrink-0" />
-                <span className="text-primary-foreground/70">Via Don A. Ceriotti 19, 27029 Vigevano (PV), Italy</span>
+                <span className="text-primary-foreground/70">{address}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-secondary shrink-0" />
                 <div className="text-primary-foreground/70">
-                  <a href="tel:+390381327014" className="hover:text-secondary transition-colors block">+39 0381 327014</a>
-                  <a href="tel:+393737832227" className="hover:text-secondary transition-colors block">+39 373 7832227</a>
+                  <a href={`tel:${phone1.replace(/\s/g, "")}`} className="hover:text-secondary transition-colors block">{phone1}</a>
+                  <a href={`tel:${phone2.replace(/\s/g, "")}`} className="hover:text-secondary transition-colors block">{phone2}</a>
                 </div>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-secondary shrink-0" />
-                <a href="mailto:lomellina@aia-figc.it" className="text-primary-foreground/70 hover:text-secondary transition-colors">
-                  lomellina@aia-figc.it
-                </a>
+                <a href={`mailto:${email}`} className="text-primary-foreground/70 hover:text-secondary transition-colors">{email}</a>
               </li>
             </ul>
           </div>
@@ -77,13 +91,7 @@ export default function Footer() {
           <div>
             <h3 className="font-heading font-bold text-sm uppercase tracking-wider mb-4 text-secondary">Seguici</h3>
             <div className="flex gap-3 mb-6">
-              {[
-                { icon: Facebook, href: "https://www.facebook.com/sezioneaialomellina" },
-                { icon: XIcon, href: "https://x.com/aialomellina" },
-                { icon: Instagram, href: "https://www.instagram.com/aialomellina/" },
-                { icon: Youtube, href: "https://www.youtube.com/AiaLomellina" },
-                { icon: Send, href: "https://t.me/aialomellina" },
-              ].map((s, i) => (
+              {socialLinks.map((s, i) => (
                 <a
                   key={i}
                   href={s.href}
@@ -96,7 +104,7 @@ export default function Footer() {
               ))}
             </div>
             <a
-              href="https://wa.me/393737832227"
+              href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-pitch text-pitch-foreground rounded-lg font-medium text-sm hover:bg-pitch/90 transition-colors"
