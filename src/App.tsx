@@ -143,6 +143,7 @@ const App = () => (
                 <Route path="/admin/social-feed" element={<ProtectedRoute requireAdmin><AdminSocialFeed /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute requireSuperAdmin><AdminUsers /></ProtectedRoute>} />
                 <Route path="/admin/settings" element={<ProtectedRoute requireAdmin><AdminSettings /></ProtectedRoute>} />
+                <Route path="/admin/counters" element={<ProtectedRoute requireAdmin><AdminCounters /></ProtectedRoute>} />
                 <Route path="/admin/email-settings" element={<ProtectedRoute requireSuperAdmin><AdminEmailSettings /></ProtectedRoute>} />
                 <Route path="/admin/activity-log" element={<ProtectedRoute requireAdmin><AdminActivityLog /></ProtectedRoute>} />
 
