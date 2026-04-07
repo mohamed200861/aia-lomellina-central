@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown, Facebook, Instagram, Youtube, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import aiaLogo from "@/assets/aia-logo.webp";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
@@ -29,18 +30,19 @@ const navItems = [
   { label: "Contatti", path: "/contatti" },
 ];
 
-const socials = [
-  { icon: Facebook, href: "https://www.facebook.com/sezioneaialomellina", label: "Facebook" },
-  { icon: XIcon, href: "https://x.com/aialomellina", label: "X" },
-  { icon: Instagram, href: "https://www.instagram.com/aialomellina/", label: "Instagram" },
-  { icon: Youtube, href: "https://www.youtube.com/AiaLomellina", label: "YouTube" },
-  { icon: Send, href: "https://t.me/aialomellina", label: "Telegram" },
-];
-
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
+  const { data: settings } = useSiteSettings();
+
+  const socials = [
+    { icon: Facebook, href: settings?.facebook_url || "https://www.facebook.com/sezioneaialomellina", label: "Facebook" },
+    { icon: XIcon, href: settings?.x_url || "https://x.com/aialomellina", label: "X" },
+    { icon: Instagram, href: settings?.instagram_url || "https://www.instagram.com/aialomellina/", label: "Instagram" },
+    { icon: Youtube, href: settings?.youtube_url || "https://www.youtube.com/AiaLomellina", label: "YouTube" },
+    { icon: Send, href: settings?.telegram_url || "https://t.me/aialomellina", label: "Telegram" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-primary shadow-lg">
