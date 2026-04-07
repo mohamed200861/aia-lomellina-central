@@ -5,6 +5,7 @@ import {
   ChevronRight, TrendingUp, ArrowRight, ExternalLink, ChevronLeft,
   Image as ImageIcon
 } from "lucide-react";
+import { useHomepageCounters } from "@/hooks/useHomepageCounters";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import heroImage from "@/assets/hero-referee.jpg";
