@@ -67,6 +67,7 @@ export default function AdminDashboard() {
     { label: "Comunicazioni", path: "/admin/communications" },
     { label: "Email Settings", path: "/admin/email-settings" },
     { label: "Impostazioni Sito", path: "/admin/settings" },
+    { label: "Contatori Homepage", path: "/admin/counters" },
   ];
 
   return (
