@@ -307,6 +307,45 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_counters: {
+        Row: {
+          auto_sync_table: string | null
+          created_at: string
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          sort_order: number | null
+          suffix: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          auto_sync_table?: string | null
+          created_at?: string
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          sort_order?: number | null
+          suffix?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          auto_sync_table?: string | null
+          created_at?: string
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          sort_order?: number | null
+          suffix?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       internal_communications: {
         Row: {
           content: string | null
